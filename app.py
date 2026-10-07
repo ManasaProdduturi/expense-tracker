@@ -151,6 +151,29 @@ def edit_expense(expense_id):
     )
 
 
+@app.route("/expenses/<int:expense_id>/delete")
+def delete_expense(expense_id):
+    redirect_response = login_required()
+
+    if redirect_response:
+        return redirect_response
+
+    connection = get_db_connection()
+
+    connection.execute(
+        """
+        DELETE FROM expenses
+        WHERE id = ? AND user_id = ?
+        """,
+        (expense_id, session["user_id"])
+    )
+
+    connection.commit()
+    connection.close()
+
+    return redirect(url_for("expenses"))
+
+
 @app.route("/")
 def home():
     return render_template("index.html")
