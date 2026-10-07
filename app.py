@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, session
+from flask import Flask, render_template, request, session, redirect, url_for
 import sqlite3
 from database import get_db_connection
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -6,6 +6,9 @@ from werkzeug.security import generate_password_hash, check_password_hash
 app = Flask(__name__)
 app.secret_key = "dev-secret-key"
 
+def login_required():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
 
 @app.route("/")
 def home():
@@ -79,8 +82,10 @@ def login():
 
 @app.route("/profile")
 def profile():
-    if "user_id" not in session:
-        return "You are not logged in!"
+    redirect_response = login_required()
+
+    if redirect_response:
+        return redirect_response
 
     return f"Logged in as user ID: {session['user_id']}"
 
