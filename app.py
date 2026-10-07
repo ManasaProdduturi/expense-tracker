@@ -58,6 +58,37 @@ def add_expense():
     )
 
 
+@app.route("/expenses")
+def expenses():
+    redirect_response = login_required()
+
+    if redirect_response:
+        return redirect_response
+
+    connection = get_db_connection()
+
+    expenses = connection.execute(
+        """
+        SELECT
+            expenses.*,
+            categories.name AS category_name
+        FROM expenses
+        JOIN categories
+            ON expenses.category_id = categories.id
+        WHERE expenses.user_id = ?
+        ORDER BY expenses.date DESC
+        """,
+        (session["user_id"],)
+    ).fetchall()
+
+    connection.close()
+
+    return render_template(
+        "expenses.html",
+        expenses=expenses
+    )
+
+
 @app.route("/")
 def home():
     return render_template("index.html")
