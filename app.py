@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request
 from database import get_db_connection
+from werkzeug.security import generate_password_hash
 
 app = Flask(__name__)
 
@@ -16,8 +17,12 @@ def register():
         email = request.form["email"]
         password = request.form["password"]
         confirm_password = request.form["confirm_password"]
+        if password != confirm_password:
+            return "Passwords do not match!"
 
-        print(username, email, password, confirm_password)
+        password_hash = generate_password_hash(password)
+
+        print(username, email, password_hash)
 
     return render_template("register.html")
 
