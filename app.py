@@ -329,6 +329,8 @@ def dashboard():
     if redirect_response:
         return redirect_response
 
+    period = request.args.get("period", "all")
+
     connection = get_db_connection()
 
     total_spending = connection.execute(
@@ -336,8 +338,20 @@ def dashboard():
         SELECT COALESCE(SUM(amount), 0) AS total_spending
         FROM expenses
         WHERE user_id = ?
+        AND (
+            ? = 'all'
+            OR (? = 'month' AND strftime('%Y-%m', date) = strftime('%Y-%m', 'now'))
+            OR (? = 'last_month' AND strftime('%Y-%m', date) = strftime('%Y-%m', 'now', '-1 month'))
+            OR (? = 'year' AND strftime('%Y', date) = strftime('%Y', 'now'))
+        )
         """,
-        (session["user_id"],)
+        (
+            session["user_id"],
+            period,
+            period,
+            period,
+            period
+        )
     ).fetchone()["total_spending"]
 
     expense_count = connection.execute(
@@ -345,16 +359,111 @@ def dashboard():
         SELECT COUNT(*) AS expense_count
         FROM expenses
         WHERE user_id = ?
+        AND (
+            ? = 'all'
+            OR (? = 'month' AND strftime('%Y-%m', date) = strftime('%Y-%m', 'now'))
+            OR (? = 'last_month' AND strftime('%Y-%m', date) = strftime('%Y-%m', 'now', '-1 month'))
+            OR (? = 'year' AND strftime('%Y', date) = strftime('%Y', 'now'))
+        )
         """,
-        (session["user_id"],)
+        (
+            session["user_id"],
+            period,
+            period,
+            period,
+            period
+        )
     ).fetchone()["expense_count"]
+
+    category_spending = connection.execute(
+        """
+        SELECT
+            categories.name AS category_name,
+            SUM(expenses.amount) AS total_amount
+        FROM expenses
+        JOIN categories
+            ON expenses.category_id = categories.id
+        WHERE expenses.user_id = ?
+        AND (
+            ? = 'all'
+            OR (? = 'month' AND strftime('%Y-%m', expenses.date) = strftime('%Y-%m', 'now'))
+            OR (? = 'last_month' AND strftime('%Y-%m', expenses.date) = strftime('%Y-%m', 'now', '-1 month'))
+            OR (? = 'year' AND strftime('%Y', expenses.date) = strftime('%Y', 'now'))
+        )
+        GROUP BY expenses.category_id
+        ORDER BY total_amount DESC
+        """,
+        (
+            session["user_id"],
+            period,
+            period,
+            period,
+            period
+        )
+    ).fetchall()
+
+    recent_expenses = connection.execute(
+        """
+        SELECT
+            expenses.*,
+            categories.name AS category_name
+        FROM expenses
+        JOIN categories
+            ON expenses.category_id = categories.id
+        WHERE expenses.user_id = ?
+        AND (
+            ? = 'all'
+            OR (? = 'month' AND strftime('%Y-%m', expenses.date) = strftime('%Y-%m', 'now'))
+            OR (? = 'last_month' AND strftime('%Y-%m', expenses.date) = strftime('%Y-%m', 'now', '-1 month'))
+            OR (? = 'year' AND strftime('%Y', expenses.date) = strftime('%Y', 'now'))
+        )
+        ORDER BY expenses.date DESC
+        LIMIT 5
+        """,
+        (
+            session["user_id"],
+            period,
+            period,
+            period,
+            period
+        )
+    ).fetchall()
+
+    spending_over_time = connection.execute(
+        """
+        SELECT
+            date,
+            SUM(amount) AS total_amount
+        FROM expenses
+        WHERE user_id = ?
+        AND (
+            ? = 'all'
+            OR (? = 'month' AND strftime('%Y-%m', date) = strftime('%Y-%m', 'now'))
+            OR (? = 'last_month' AND strftime('%Y-%m', date) = strftime('%Y-%m', 'now', '-1 month'))
+            OR (? = 'year' AND strftime('%Y', date) = strftime('%Y', 'now'))
+        )
+        GROUP BY date
+        ORDER BY date
+        """,
+        (
+            session["user_id"],
+            period,
+            period,
+            period,
+            period
+        )
+    ).fetchall()
 
     connection.close()
 
     return render_template(
-    "dashboard.html",
-    total_spending=total_spending,
-    expense_count=expense_count
+        "dashboard.html",
+        total_spending=total_spending,
+        expense_count=expense_count,
+        category_spending=category_spending,
+        recent_expenses=recent_expenses,
+        spending_over_time=spending_over_time,
+        period=period
     )
 
 

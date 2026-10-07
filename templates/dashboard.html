@@ -2,10 +2,37 @@
 <html>
 <head>
     <title>Dashboard - Expense Tracker</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
     <h1>Dashboard</h1>
+
+    <form method="GET" action="{{ url_for('dashboard') }}">
+
+        <label>Period:</label>
+
+        <select name="period">
+            <option value="all" {% if period == "all" %}selected{% endif %}>
+                All Time
+            </option>
+
+            <option value="month" {% if period == "month" %}selected{% endif %}>
+                This Month
+            </option>
+
+            <option value="last_month" {% if period == "last_month" %}selected{% endif %}>
+                Last Month
+            </option>
+
+            <option value="year" {% if period == "year" %}selected{% endif %}>
+                This Year
+            </option>
+        </select>
+
+        <button type="submit">Apply</button>
+
+    </form>
 
     <h2>Total Spending</h2>
 
@@ -14,6 +41,41 @@
     <h2>Expense Count</h2>
 
     <p>{{ expense_count }}</p>
+
+    <h2>Spending by Category</h2>
+
+        <ul>
+            {% for category in category_spending %}
+                <li>
+                    {{ category["category_name"] }}:
+                    ₹{{ category["total_amount"] }}
+                </li>
+            {% endfor %}
+        </ul>
+
+    <h2>Recent Expenses</h2>
+
+    <ul>
+        {% for expense in recent_expenses %}
+            <li>
+                ₹{{ expense["amount"] }}
+                - {{ expense["category_name"] }}
+                - {{ expense["date"] }}
+                - {{ expense["description"] or "No description" }}
+            </li>
+        {% endfor %}
+    </ul>
+
+    <h2>Spending Over Time</h2>
+
+    <ul>
+        {% for spending in spending_over_time %}
+            <li>
+                {{ spending["date"] }}:
+                ₹{{ spending["total_amount"] }}
+            </li>
+        {% endfor %}
+    </ul>
 
 </body>
 </html>
