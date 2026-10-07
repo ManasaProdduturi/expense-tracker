@@ -22,7 +22,20 @@ def register():
 
         password_hash = generate_password_hash(password)
 
-        print(username, email, password_hash)
+        connection = get_db_connection()
+
+        connection.execute(
+            """
+            INSERT INTO users (username, email, password_hash)
+            VALUES (?, ?, ?)
+            """,
+            (username, email, password_hash)
+        )
+
+        connection.commit()
+        connection.close()
+
+        return "Registration successful!"
 
     return render_template("register.html")
 
