@@ -80,16 +80,6 @@ def login():
     return render_template("login.html")
 
 
-@app.route("/profile")
-def profile():
-    redirect_response = login_required()
-
-    if redirect_response:
-        return redirect_response
-
-    return f"Logged in as user ID: {session['user_id']}"
-
-
 @app.route("/logout")
 def logout():
     session.clear()
