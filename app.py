@@ -44,7 +44,7 @@ def add_expense():
         connection.commit()
         connection.close()
 
-        return redirect(url_for("add_expense"))
+        return redirect(url_for("expenses"))
 
     categories = connection.execute(
         "SELECT * FROM categories"
