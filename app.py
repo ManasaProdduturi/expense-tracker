@@ -77,6 +77,8 @@ def expenses():
     category = request.args.get("category", "")
     date_from = request.args.get("date_from", "")
     date_to = request.args.get("date_to", "")
+    min_amount = request.args.get("min_amount", "")
+    max_amount = request.args.get("max_amount", "")
 
     connection = get_db_connection()
 
@@ -93,6 +95,8 @@ def expenses():
       AND (? = '' OR expenses.category_id = ?)
       AND (? = '' OR expenses.date >= ?)
       AND (? = '' OR expenses.date <= ?)
+      AND (? = '' OR expenses.amount >= ?)
+      AND (? = '' OR expenses.amount <= ?)
     ORDER BY expenses.date DESC
     """,
     (
@@ -103,7 +107,11 @@ def expenses():
         date_from,
         date_from,
         date_to,
-        date_to
+        date_to,
+        min_amount,
+        min_amount,
+        max_amount,
+        max_amount
     )
     ).fetchall()
 
@@ -120,8 +128,10 @@ def expenses():
     categories=categories,
     selected_category=category,
     date_from=date_from,
-    date_to=date_to
-)
+    date_to=date_to,
+    min_amount=min_amount,
+    max_amount=max_amount
+    )
 
 
 @app.route("/expenses/<int:expense_id>/edit", methods=["GET", "POST"])
@@ -310,6 +320,16 @@ def categories():
         "categories.html",
         categories=categories
     )
+
+
+@app.route("/dashboard")
+def dashboard():
+    redirect_response = login_required()
+
+    if redirect_response:
+        return redirect_response
+
+    return render_template("dashboard.html")
 
 
 if __name__ == "__main__":
