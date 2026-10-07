@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request
+import sqlite3
 from database import get_db_connection
 from werkzeug.security import generate_password_hash
 
@@ -17,6 +18,7 @@ def register():
         email = request.form["email"]
         password = request.form["password"]
         confirm_password = request.form["confirm_password"]
+
         if password != confirm_password:
             return "Passwords do not match!"
 
@@ -24,15 +26,21 @@ def register():
 
         connection = get_db_connection()
 
-        connection.execute(
-            """
-            INSERT INTO users (username, email, password_hash)
-            VALUES (?, ?, ?)
-            """,
-            (username, email, password_hash)
-        )
+        try:
+            connection.execute(
+                """
+                INSERT INTO users (username, email, password_hash)
+                VALUES (?, ?, ?)
+                """,
+                (username, email, password_hash)
+            )
 
-        connection.commit()
+            connection.commit()
+
+        except sqlite3.IntegrityError:
+            connection.close()
+            return "Username or email already exists!"
+
         connection.close()
 
         return "Registration successful!"
