@@ -68,6 +68,15 @@
 
         <div class="card-body p-4">
 
+            {% if error %}
+            <div class="alert alert-danger d-flex align-items-center mb-4" role="alert">
+                <span class="me-2">⚠️</span>
+                <div>
+                    {{ error }}
+                </div>
+            </div>
+            {% endif %}
+
             <form method="POST">
 
                 <!-- Amount -->
