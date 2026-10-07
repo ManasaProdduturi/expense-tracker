@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Categories - Expense Tracker</title>
+</head>
+<body>
+
+    <h1>Categories</h1>
+
+    <ol>
+        {% for category in categories %}
+            <li>{{ category["name"] }}</li>
+        {% endfor %}
+    </ol>
+
+</body>
+</html>

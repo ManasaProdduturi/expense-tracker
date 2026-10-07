@@ -264,5 +264,26 @@ def logout():
     return "Logged out successfully!"
 
 
+@app.route("/categories")
+def categories():
+    redirect_response = login_required()
+
+    if redirect_response:
+        return redirect_response
+
+    connection = get_db_connection()
+
+    categories = connection.execute(
+        "SELECT * FROM categories ORDER BY name"
+    ).fetchall()
+
+    connection.close()
+
+    return render_template(
+        "categories.html",
+        categories=categories
+    )
+
+
 if __name__ == "__main__":
     app.run(debug=True)
