@@ -75,6 +75,8 @@ def expenses():
 
     search = request.args.get("search", "")
     category = request.args.get("category", "")
+    date_from = request.args.get("date_from", "")
+    date_to = request.args.get("date_to", "")
 
     connection = get_db_connection()
 
@@ -89,13 +91,19 @@ def expenses():
     WHERE expenses.user_id = ?
       AND expenses.description LIKE ?
       AND (? = '' OR expenses.category_id = ?)
+      AND (? = '' OR expenses.date >= ?)
+      AND (? = '' OR expenses.date <= ?)
     ORDER BY expenses.date DESC
     """,
     (
         session["user_id"],
         f"%{search}%",
         category,
-        category
+        category,
+        date_from,
+        date_from,
+        date_to,
+        date_to
     )
     ).fetchall()
 
@@ -110,7 +118,9 @@ def expenses():
     expenses=expenses,
     search=search,
     categories=categories,
-    selected_category=category
+    selected_category=category,
+    date_from=date_from,
+    date_to=date_to
 )
 
 

@@ -33,6 +33,12 @@
         {% endfor %}
     </select>
 
+    <label>From:</label>
+    <input type="date" name="date_from" value="{{ date_from }}">
+
+    <label>To:</label>
+    <input type="date" name="date_to" value="{{ date_to }}">
+
     </form>
 
     <a href="{{ url_for('add_expense') }}">Add Expense</a>
