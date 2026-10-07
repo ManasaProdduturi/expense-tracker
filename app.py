@@ -1,9 +1,10 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, session
 import sqlite3
 from database import get_db_connection
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
+app.secret_key = "dev-secret-key"
 
 
 @app.route("/")
@@ -69,9 +70,20 @@ def login():
         if not check_password_hash(user["password_hash"], password):
             return "Invalid username or password!"
 
+        session["user_id"] = user["id"]
+
         return "Login successful!"
 
     return render_template("login.html")
+
+
+@app.route("/profile")
+def profile():
+    if "user_id" not in session:
+        return "You are not logged in!"
+
+    return f"Logged in as user ID: {session['user_id']}"
+
 
 if __name__ == "__main__":
     app.run(debug=True)
