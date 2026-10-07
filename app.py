@@ -1,10 +1,12 @@
 from flask import Flask, render_template, request, session, redirect, url_for
+from datetime import date
 import sqlite3
 from database import get_db_connection
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 app.secret_key = "dev-secret-key"
+
 
 def login_required():
     if "user_id" not in session:
@@ -22,9 +24,14 @@ def add_expense():
 
     if request.method == "POST":
         amount = request.form["amount"]
-        date = request.form["date"]
+        expense_date = request.form["date"]
         category_id = request.form["category_id"]
         description = request.form["description"]
+
+        # Prevent future dates
+        if expense_date > date.today().isoformat():
+            connection.close()
+            return "Expense date cannot be in the future!"
 
         connection.execute(
             """
@@ -36,7 +43,7 @@ def add_expense():
                 session["user_id"],
                 category_id,
                 amount,
-                date,
+                expense_date,
                 description
             )
         )
@@ -54,7 +61,8 @@ def add_expense():
 
     return render_template(
         "add_expense.html",
-        categories=categories
+        categories=categories,
+        today=date.today().isoformat()
     )
 
 
@@ -113,9 +121,14 @@ def edit_expense(expense_id):
 
     if request.method == "POST":
         amount = request.form["amount"]
-        date = request.form["date"]
+        expense_date = request.form["date"]
         category_id = request.form["category_id"]
         description = request.form["description"]
+
+        # Prevent future dates
+        if expense_date > date.today().isoformat():
+            connection.close()
+            return "Expense date cannot be in the future!"
 
         connection.execute(
             """
@@ -125,7 +138,7 @@ def edit_expense(expense_id):
             """,
             (
                 amount,
-                date,
+                expense_date,
                 category_id,
                 description,
                 expense_id,
@@ -147,7 +160,8 @@ def edit_expense(expense_id):
     return render_template(
         "edit_expense.html",
         expense=expense,
-        categories=categories
+        categories=categories,
+        today=date.today().isoformat()
     )
 
 
