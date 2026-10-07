@@ -7,6 +7,34 @@
 
     <h1>My Expenses</h1>
 
+    <form method="GET" action="{{ url_for('expenses') }}">
+
+    <input
+        type="text"
+        name="search"
+        placeholder="Search description..."
+        value="{{ search }}"
+    >
+
+    <button type="submit">Search</button>
+
+    <select name="category">
+        <option value="">All Categories</option>
+        
+        {% for category in categories %}
+            <option
+                value="{{ category['id'] }}"
+                {% if category['id']|string == selected_category %}
+                selected
+                {% endif %}
+            >
+                {{ category['name'] }}
+            </option>
+        {% endfor %}
+    </select>
+
+    </form>
+
     <a href="{{ url_for('add_expense') }}">Add Expense</a>
 
     <br><br>

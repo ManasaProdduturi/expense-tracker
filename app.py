@@ -73,28 +73,45 @@ def expenses():
     if redirect_response:
         return redirect_response
 
+    search = request.args.get("search", "")
+    category = request.args.get("category", "")
+
     connection = get_db_connection()
 
     expenses = connection.execute(
-        """
-        SELECT
-            expenses.*,
-            categories.name AS category_name
-        FROM expenses
-        JOIN categories
-            ON expenses.category_id = categories.id
-        WHERE expenses.user_id = ?
-        ORDER BY expenses.date DESC
-        """,
-        (session["user_id"],)
+    """
+    SELECT
+        expenses.*,
+        categories.name AS category_name
+    FROM expenses
+    JOIN categories
+        ON expenses.category_id = categories.id
+    WHERE expenses.user_id = ?
+      AND expenses.description LIKE ?
+      AND (? = '' OR expenses.category_id = ?)
+    ORDER BY expenses.date DESC
+    """,
+    (
+        session["user_id"],
+        f"%{search}%",
+        category,
+        category
+    )
+    ).fetchall()
+
+    categories = connection.execute(
+    "SELECT * FROM categories ORDER BY name"
     ).fetchall()
 
     connection.close()
 
     return render_template(
-        "expenses.html",
-        expenses=expenses
-    )
+    "expenses.html",
+    expenses=expenses,
+    search=search,
+    categories=categories,
+    selected_category=category
+)
 
 
 @app.route("/expenses/<int:expense_id>/edit", methods=["GET", "POST"])
