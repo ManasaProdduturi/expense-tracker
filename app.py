@@ -402,6 +402,14 @@ def dashboard():
         )
     ).fetchall()
 
+    category_spending = [
+    {
+        "category_name": category["category_name"],
+        "total_amount": category["total_amount"]
+    }
+    for category in category_spending
+    ]
+
     recent_expenses = connection.execute(
         """
         SELECT
@@ -453,6 +461,14 @@ def dashboard():
             period
         )
     ).fetchall()
+
+    spending_over_time = [
+    {
+        "date": spending["date"],
+        "total_amount": spending["total_amount"]
+    }
+    for spending in spending_over_time
+]
 
     connection.close()
 

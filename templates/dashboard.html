@@ -2,7 +2,10 @@
 <html>
 <head>
     <title>Dashboard - Expense Tracker</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body>
 
     <h1>Dashboard</h1>
@@ -12,6 +15,7 @@
         <label>Period:</label>
 
         <select name="period">
+
             <option value="all" {% if period == "all" %}selected{% endif %}>
                 All Time
             </option>
@@ -27,6 +31,7 @@
             <option value="year" {% if period == "year" %}selected{% endif %}>
                 This Year
             </option>
+
         </select>
 
         <button type="submit">Apply</button>
@@ -37,44 +42,144 @@
 
     <p>₹{{ total_spending }}</p>
 
+
     <h2>Expense Count</h2>
 
     <p>{{ expense_count }}</p>
 
+
     <h2>Spending by Category</h2>
 
-        <ul>
-            {% for category in category_spending %}
-                <li>
-                    {{ category["category_name"] }}:
-                    ₹{{ category["total_amount"] }}
-                </li>
-            {% endfor %}
-        </ul>
+    <ul>
+
+        {% for category in category_spending %}
+
+            <li>
+                {{ category["category_name"] }}:
+                ₹{{ category["total_amount"] }}
+            </li>
+
+        {% endfor %}
+
+    </ul>
+
+
+    <canvas id="categoryChart"></canvas>
+
+
+    <script id="category-data" type="application/json">
+        {{ category_spending | tojson }}
+    </script>
+
+
+    <script>
+
+        const categoryData = JSON.parse(
+            document.getElementById("category-data").textContent
+        );
+
+        const labels = categoryData.map(
+            category => category.category_name
+        );
+
+        const values = categoryData.map(
+            category => category.total_amount
+        );
+
+        new Chart(document.getElementById("categoryChart"), {
+
+            type: "bar",
+
+            data: {
+
+                labels: labels,
+
+                datasets: [{
+
+                    label: "Spending",
+
+                    data: values
+
+                }]
+
+            }
+
+        });
+
+    </script>
+
 
     <h2>Recent Expenses</h2>
 
     <ul>
+
         {% for expense in recent_expenses %}
+
             <li>
+
                 ₹{{ expense["amount"] }}
+
                 - {{ expense["category_name"] }}
+
                 - {{ expense["date"] }}
+
                 - {{ expense["description"] or "No description" }}
+
             </li>
+
         {% endfor %}
+
     </ul>
+
 
     <h2>Spending Over Time</h2>
 
     <ul>
+
         {% for spending in spending_over_time %}
+
             <li>
+
                 {{ spending["date"] }}:
                 ₹{{ spending["total_amount"] }}
+
             </li>
+
         {% endfor %}
+
     </ul>
+
+    <canvas id="timeChart"></canvas>
+
+<script id="time-data" type="application/json">
+    {{ spending_over_time | tojson }}
+</script>
+
+<script>
+    const timeData = JSON.parse(
+        document.getElementById("time-data").textContent
+    );
+
+    const timeLabels = timeData.map(
+        spending => spending.date
+    );
+
+    const timeValues = timeData.map(
+        spending => spending.total_amount
+    );
+
+    new Chart(document.getElementById("timeChart"), {
+        type: "line",
+        data: {
+            labels: timeLabels,
+            datasets: [{
+                label: "Daily Spending",
+                data: timeValues
+            }]
+        }
+    });
+</script>
+
 
 </body>
 </html>
