@@ -89,6 +89,68 @@ def expenses():
     )
 
 
+@app.route("/expenses/<int:expense_id>/edit", methods=["GET", "POST"])
+def edit_expense(expense_id):
+    redirect_response = login_required()
+
+    if redirect_response:
+        return redirect_response
+
+    connection = get_db_connection()
+
+    expense = connection.execute(
+        """
+        SELECT *
+        FROM expenses
+        WHERE id = ? AND user_id = ?
+        """,
+        (expense_id, session["user_id"])
+    ).fetchone()
+
+    if expense is None:
+        connection.close()
+        return "Expense not found!"
+
+    if request.method == "POST":
+        amount = request.form["amount"]
+        date = request.form["date"]
+        category_id = request.form["category_id"]
+        description = request.form["description"]
+
+        connection.execute(
+            """
+            UPDATE expenses
+            SET amount = ?, date = ?, category_id = ?, description = ?
+            WHERE id = ? AND user_id = ?
+            """,
+            (
+                amount,
+                date,
+                category_id,
+                description,
+                expense_id,
+                session["user_id"]
+            )
+        )
+
+        connection.commit()
+        connection.close()
+
+        return redirect(url_for("expenses"))
+
+    categories = connection.execute(
+        "SELECT * FROM categories"
+    ).fetchall()
+
+    connection.close()
+
+    return render_template(
+        "edit_expense.html",
+        expense=expense,
+        categories=categories
+    )
+
+
 @app.route("/")
 def home():
     return render_template("index.html")

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Expense - Expense Tracker</title>
+</head>
+<body>
+
+    <h1>Edit Expense</h1>
+
+    <form method="POST">
+
+        <label>Amount:</label>
+        <input
+            type="number"
+            name="amount"
+            step="0.01"
+            min="0.01"
+            value="{{ expense['amount'] }}"
+            required
+        >
+
+        <br><br>
+
+        <label>Date:</label>
+        <input
+            type="date"
+            name="date"
+            value="{{ expense['date'] }}"
+            required
+        >
+
+        <br><br>
+
+        <label>Category:</label>
+        <select name="category_id" required>
+
+            {% for category in categories %}
+                <option
+                    value="{{ category['id'] }}"
+                    {% if category['id'] == expense['category_id'] %}
+                        selected
+                    {% endif %}
+                >
+                    {{ category['name'] }}
+                </option>
+            {% endfor %}
+
+        </select>
+
+        <br><br>
+
+        <label>Description:</label>
+        <input
+            type="text"
+            name="description"
+            value="{{ expense['description'] or '' }}"
+        >
+
+        <br><br>
+
+        <button type="submit">Save Changes</button>
+
+    </form>
+
+</body>
+</html>
