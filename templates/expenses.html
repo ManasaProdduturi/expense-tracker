@@ -34,7 +34,10 @@
                             Edit
                         </a>
 
-                        <a href="{{ url_for('delete_expense', expense_id=expense['id']) }}">
+                        <a
+                            href="{{ url_for('delete_expense', expense_id=expense['id']) }}"
+                            onclick="return confirm('Are you sure you want to delete this expense?');"
+                        >
                             Delete
                         </a>
                     </td>
