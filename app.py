@@ -85,5 +85,11 @@ def profile():
     return f"Logged in as user ID: {session['user_id']}"
 
 
+@app.route("/logout")
+def logout():
+    session.clear()
+    return "Logged out successfully!"
+
+
 if __name__ == "__main__":
     app.run(debug=True)
