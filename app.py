@@ -10,6 +10,28 @@ def login_required():
     if "user_id" not in session:
         return redirect(url_for("login"))
 
+
+@app.route("/expenses/add", methods=["GET", "POST"])
+def add_expense():
+    redirect_response = login_required()
+
+    if redirect_response:
+        return redirect_response
+
+    connection = get_db_connection()
+
+    categories = connection.execute(
+        "SELECT * FROM categories"
+    ).fetchall()
+
+    connection.close()
+
+    return render_template(
+        "add_expense.html",
+        categories=categories
+    )
+
+
 @app.route("/")
 def home():
     return render_template("index.html")

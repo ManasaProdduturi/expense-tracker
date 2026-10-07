@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Expense - Expense Tracker</title>
+</head>
+<body>
+
+    <h1>Add Expense</h1>
+
+    <form method="POST">
+
+        <label>Amount:</label>
+        <input type="number" name="amount" step="0.01" min="0.01" required>
+
+        <br><br>
+
+        <label>Date:</label>
+        <input type="date" name="date" required>
+
+        <br><br>
+
+        <label>Category:</label>
+        <select name="category_id" required>
+            {% for category in categories %}
+                <option value="{{ category['id'] }}">
+                    {{ category['name'] }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <br><br>
+
+        <label>Description:</label>
+        <input type="text" name="description">
+
+        <br><br>
+
+        <button type="submit">Add Expense</button>
+
+    </form>
+
+</body>
+</html>
