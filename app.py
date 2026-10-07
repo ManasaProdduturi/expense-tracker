@@ -20,6 +20,32 @@ def add_expense():
 
     connection = get_db_connection()
 
+    if request.method == "POST":
+        amount = request.form["amount"]
+        date = request.form["date"]
+        category_id = request.form["category_id"]
+        description = request.form["description"]
+
+        connection.execute(
+            """
+            INSERT INTO expenses
+            (user_id, category_id, amount, date, description)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (
+                session["user_id"],
+                category_id,
+                amount,
+                date,
+                description
+            )
+        )
+
+        connection.commit()
+        connection.close()
+
+        return redirect(url_for("add_expense"))
+
     categories = connection.execute(
         "SELECT * FROM categories"
     ).fetchall()
