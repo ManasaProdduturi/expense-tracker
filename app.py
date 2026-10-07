@@ -329,7 +329,33 @@ def dashboard():
     if redirect_response:
         return redirect_response
 
-    return render_template("dashboard.html")
+    connection = get_db_connection()
+
+    total_spending = connection.execute(
+        """
+        SELECT COALESCE(SUM(amount), 0) AS total_spending
+        FROM expenses
+        WHERE user_id = ?
+        """,
+        (session["user_id"],)
+    ).fetchone()["total_spending"]
+
+    expense_count = connection.execute(
+        """
+        SELECT COUNT(*) AS expense_count
+        FROM expenses
+        WHERE user_id = ?
+        """,
+        (session["user_id"],)
+    ).fetchone()["expense_count"]
+
+    connection.close()
+
+    return render_template(
+    "dashboard.html",
+    total_spending=total_spending,
+    expense_count=expense_count
+    )
 
 
 if __name__ == "__main__":
