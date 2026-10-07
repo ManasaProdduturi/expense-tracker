@@ -258,7 +258,10 @@ def register():
 
         except sqlite3.IntegrityError:
             connection.close()
-            return "Username or email already exists!"
+            return render_template(
+                "register.html",
+                error="That username or email is already registered. Please try another one."
+            )
 
         connection.close()
 
@@ -290,7 +293,7 @@ def login():
 
         session["user_id"] = user["id"]
 
-        return "Login successful!"
+        return redirect(url_for("home"))
 
     return render_template("login.html")
 
@@ -298,7 +301,7 @@ def login():
 @app.route("/logout")
 def logout():
     session.clear()
-    return "Logged out successfully!"
+    return redirect(url_for("home"))
 
 
 @app.route("/categories")
