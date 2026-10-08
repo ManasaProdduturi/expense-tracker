@@ -64,6 +64,67 @@ Expense Tracker
 
         server.send_message(message)
 
+        def send_account_deletion_otp_email(email, otp):
+            sender_email = os.environ.get("EMAIL_ADDRESS")
+            sender_password = os.environ.get("EMAIL_PASSWORD")
+
+            message = EmailMessage()
+            message["Subject"] = "Expense Tracker - Account Deletion Verification"
+            message["From"] = sender_email
+            message["To"] = email
+
+            message.set_content(
+                f"""
+        Hello,
+
+        We received a request to delete your Expense Tracker account.
+
+        Your account deletion verification code is:
+
+        {otp}
+
+        This code will expire in 10 minutes.
+
+        If you did not request account deletion, you can safely ignore this email.
+
+        Regards,
+        Expense Tracker
+        """
+            )
+
+            with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+                smtp.login(sender_email, sender_password)
+                smtp.send_message(message)
+
+
+        def send_account_deleted_email(email, username):
+            sender_email = os.environ.get("EMAIL_ADDRESS")
+            sender_password = os.environ.get("EMAIL_PASSWORD")
+
+            message = EmailMessage()
+            message["Subject"] = "Expense Tracker - Account Deleted"
+            message["From"] = sender_email
+            message["To"] = email
+
+            message.set_content(
+                f"""
+        Hello {username},
+
+        Your Expense Tracker account has been permanently deleted.
+
+        Your expenses and account data have been removed.
+
+        This is the final email you will receive from Expense Tracker.
+
+        Regards,
+        Expense Tracker
+        """
+            )
+
+            with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+                smtp.login(sender_email, sender_password)
+                smtp.send_message(message)
+
 
 @app.route("/expenses/add", methods=["GET", "POST"])
 def add_expense():
@@ -817,6 +878,383 @@ def dashboard():
         spending_over_time=spending_over_time,
         period=period
     )
+
+
+@app.route("/account")
+def account():
+    redirect_response = login_required()
+
+    if redirect_response:
+        return redirect_response
+
+    connection = get_db_connection()
+
+    user = connection.execute(
+        """
+        SELECT username, email
+        FROM users
+        WHERE id = ?
+        """,
+        (session["user_id"],)
+    ).fetchone()
+
+    connection.close()
+
+    if user is None:
+        session.clear()
+        return redirect(url_for("login"))
+
+    return render_template(
+        "account.html",
+        user=user
+    )
+
+
+@app.route("/account/change-password", methods=["POST"])
+def change_password():
+    redirect_response = login_required()
+
+    if redirect_response:
+        return redirect_response
+
+    current_password = request.form["current_password"]
+    new_password = request.form["new_password"]
+    confirm_password = request.form["confirm_password"]
+
+    connection = get_db_connection()
+
+    user = connection.execute(
+        """
+        SELECT password_hash
+        FROM users
+        WHERE id = ?
+        """,
+        (session["user_id"],)
+    ).fetchone()
+
+    if user is None:
+        connection.close()
+        session.clear()
+        return redirect(url_for("login"))
+
+    if not check_password_hash(
+        user["password_hash"],
+        current_password
+    ):
+        connection.close()
+
+        return render_template(
+            "account.html",
+            user=user,
+            error="Current password is incorrect."
+        )
+
+    if len(new_password) < 8:
+        connection.close()
+
+        return render_template(
+            "account.html",
+            user=user,
+            error="New password must be at least 8 characters long."
+        )
+
+    if new_password != confirm_password:
+        connection.close()
+
+        return render_template(
+            "account.html",
+            user=user,
+            error="New passwords do not match."
+        )
+
+    new_password_hash = generate_password_hash(new_password)
+
+    connection.execute(
+        """
+        UPDATE users
+        SET password_hash = ?
+        WHERE id = ?
+        """,
+        (new_password_hash, session["user_id"])
+    )
+
+    connection.commit()
+    connection.close()
+
+    return redirect(url_for("account"))
+
+
+@app.route("/account/delete-request", methods=["POST"])
+def delete_account_request():
+    redirect_response = login_required()
+
+    if redirect_response:
+        return redirect_response
+
+    connection = get_db_connection()
+
+    user = connection.execute(
+        """
+        SELECT id, email
+        FROM users
+        WHERE id = ?
+        """,
+        (session["user_id"],)
+    ).fetchone()
+
+    connection.close()
+
+    if user is None:
+        session.clear()
+        return redirect(url_for("login"))
+
+    otp = str(secrets.randbelow(900000) + 100000)
+    otp_hash = generate_password_hash(otp)
+    expires_at = datetime.now() + timedelta(minutes=10)
+
+    connection = get_db_connection()
+
+    connection.execute(
+        """
+        DELETE FROM account_delete_otps
+        WHERE user_id = ?
+        """,
+        (user["id"],)
+    )
+
+    connection.execute(
+        """
+        INSERT INTO account_delete_otps
+        (user_id, otp_hash, expires_at)
+        VALUES (?, ?, ?)
+        """,
+        (
+            user["id"],
+            otp_hash,
+            expires_at.isoformat()
+        )
+    )
+
+    connection.commit()
+    connection.close()
+
+    try:
+        send_account_deletion_otp_email(user["email"], otp)
+    except Exception:
+        connection = get_db_connection()
+
+        connection.execute(
+            """
+            DELETE FROM account_delete_otps
+            WHERE user_id = ?
+            """,
+            (user["id"],)
+        )
+
+        connection.commit()
+        connection.close()
+
+        return render_template(
+            "account.html",
+            user=user,
+            error="Unable to send verification email. Please try again."
+        )
+
+    return redirect(
+        url_for(
+            "delete_account_verify",
+            email=user["email"]
+        )
+    )
+
+
+@app.route("/account/delete-verify", methods=["GET", "POST"])
+def delete_account_verify():
+    redirect_response = login_required()
+
+    if redirect_response:
+        return redirect_response
+
+    if request.method == "POST":
+        otp = request.form["otp"].strip()
+
+        connection = get_db_connection()
+
+        otp_record = connection.execute(
+            """
+            SELECT id, otp_hash, expires_at
+            FROM account_delete_otps
+            WHERE user_id = ?
+            """,
+            (session["user_id"],)
+        ).fetchone()
+
+        if otp_record is None:
+            connection.close()
+
+            return render_template(
+                "delete_account_verify.html",
+                error="Verification code is invalid or has expired."
+            )
+
+        expires_at = datetime.fromisoformat(otp_record["expires_at"])
+
+        if datetime.now() > expires_at:
+            connection.execute(
+                """
+                DELETE FROM account_delete_otps
+                WHERE id = ?
+                """,
+                (otp_record["id"],)
+            )
+
+            connection.commit()
+            connection.close()
+
+            return render_template(
+                "delete_account_verify.html",
+                error="Verification code has expired."
+            )
+
+        if not check_password_hash(
+            otp_record["otp_hash"],
+            otp
+        ):
+            connection.close()
+
+            return render_template(
+                "delete_account_verify.html",
+                error="Invalid verification code."
+            )
+
+        connection.execute(
+            """
+            DELETE FROM account_delete_otps
+            WHERE id = ?
+            """,
+            (otp_record["id"],)
+        )
+
+        connection.commit()
+        connection.close()
+
+        session["delete_verified"] = True
+
+        return redirect(url_for("delete_account_confirm"))
+
+    connection = get_db_connection()
+
+    user = connection.execute(
+        """
+        SELECT email
+        FROM users
+        WHERE id = ?
+        """,
+        (session["user_id"],)
+    ).fetchone()
+
+    connection.close()
+
+    if user is None:
+        session.clear()
+        return redirect(url_for("login"))
+
+    return render_template(
+        "delete_account_verify.html",
+        email=user["email"]
+    )
+
+
+@app.route("/account/delete-confirm", methods=["GET", "POST"])
+def delete_account_confirm():
+    redirect_response = login_required()
+
+    if redirect_response:
+        return redirect_response
+
+    if not session.get("delete_verified"):
+        return redirect(url_for("account"))
+
+    if request.method == "GET":
+        return render_template("delete_account_confirm.html")
+
+    connection = get_db_connection()
+
+    user = connection.execute(
+        """
+        SELECT username, email
+        FROM users
+        WHERE id = ?
+        """,
+        (session["user_id"],)
+    ).fetchone()
+
+    if user is None:
+        connection.close()
+        session.clear()
+        return redirect(url_for("login"))
+
+    deleted_at = datetime.now().isoformat()
+
+    connection.execute(
+        """
+        INSERT INTO deleted_users
+        (username, email, deleted_at)
+        VALUES (?, ?, ?)
+        """,
+        (
+            user["username"],
+            user["email"],
+            deleted_at
+        )
+    )
+
+    connection.execute(
+        """
+        DELETE FROM expenses
+        WHERE user_id = ?
+        """,
+        (session["user_id"],)
+    )
+
+    connection.execute(
+        """
+        DELETE FROM password_reset_otps
+        WHERE user_id = ?
+        """,
+        (session["user_id"],)
+    )
+
+    connection.execute(
+        """
+        DELETE FROM account_delete_otps
+        WHERE user_id = ?
+        """,
+        (session["user_id"],)
+    )
+
+    connection.execute(
+        """
+        DELETE FROM users
+        WHERE id = ?
+        """,
+        (session["user_id"],)
+    )
+
+    connection.commit()
+    connection.close()
+
+    try:
+        send_account_deleted_email(
+            user["email"],
+            user["username"]
+        )
+    except Exception as error:
+        print("Account deletion confirmation email failed:", error)
+
+    session.clear()
+
+    return redirect(url_for("home"))
 
 
 @app.route("/check-username")

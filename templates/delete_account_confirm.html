@@ -1,0 +1,55 @@
+{% extends "layout.html" %}
+
+{% block title %}Confirm Account Deletion{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+
+            <div class="card shadow-sm border-danger">
+                <div class="card-body p-4">
+
+                    <h2 class="text-center text-danger mb-3">
+                        Confirm Account Deletion
+                    </h2>
+
+                    <p class="text-center">
+                        Your email has been verified.
+                    </p>
+
+                    <p class="text-muted text-center">
+                        This action will permanently delete your account,
+                        expenses, and other account data.
+                    </p>
+
+                    <div class="alert alert-warning">
+                        <strong>Warning:</strong>
+                        This action cannot be undone.
+                    </div>
+
+                    <form
+                        action="{{ url_for('delete_account_confirm') }}"
+                        method="post"
+                    >
+                        <button
+                            type="submit"
+                            class="btn btn-danger w-100"
+                        >
+                            Permanently Delete My Account
+                        </button>
+                    </form>
+
+                    <div class="text-center mt-3">
+                        <a href="{{ url_for('account') }}">
+                            Cancel
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
