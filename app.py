@@ -268,16 +268,17 @@ def expenses():
     connection.close()
 
     return render_template(
-        "expenses.html",
-        expenses=expenses,
-        search=search,
-        categories=categories,
-        selected_category=category,
-        date_from=date_from,
-        date_to=date_to,
-        min_amount=min_amount,
-        max_amount=max_amount
-    )
+    "expenses.html",
+    expenses=expenses,
+    search=search,
+    categories=categories,
+    selected_category=category,
+    date_from=date_from,
+    date_to=date_to,
+    min_amount=min_amount,
+    max_amount=max_amount,
+    today=date.today().isoformat()
+)
 
 
 @app.route("/expenses/<int:expense_id>/edit", methods=["GET", "POST"])
