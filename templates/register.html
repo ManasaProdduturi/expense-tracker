@@ -39,6 +39,37 @@
         .register-button {
             width: 100%;
         }
+
+        .username-status {
+            font-size: 13px;
+            margin-top: 5px;
+        }
+
+        .password-status {
+            font-size: 13px;
+            margin-top: 5px;
+        }
+
+        .password-group {
+            position: relative;
+        }
+
+        .password-toggle {
+            position: absolute;
+            top: 50%;
+            right: 10px;
+            transform: translateY(-50%);
+            border: none;
+            background: none;
+            padding: 4px;
+            cursor: pointer;
+            font-size: 18px;
+            line-height: 1;
+        }
+
+        .password-group .form-control {
+            padding-right: 42px;
+        }
     </style>
 </head>
 
@@ -51,16 +82,20 @@
         <div class="card-body p-4">
 
             {% if error %}
+
                 <div
                     class="alert alert-danger d-flex align-items-center mb-4"
                     role="alert"
                 >
+
                     <span class="me-2">⚠️</span>
 
                     <div>
                         {{ error }}
                     </div>
+
                 </div>
+
             {% endif %}
 
             <div class="text-center mb-4">
@@ -75,7 +110,12 @@
 
             </div>
 
-            <form method="POST">
+            <form
+                method="POST"
+                id="registerForm"
+            >
+
+                <!-- Username -->
 
                 <div class="mb-3">
 
@@ -92,10 +132,19 @@
                         name="username"
                         class="form-control"
                         autocomplete="username"
+                        minlength="3"
                         required
                     >
 
+                    <div
+                        id="usernameStatus"
+                        class="username-status"
+                    ></div>
+
                 </div>
+
+
+                <!-- Email -->
 
                 <div class="mb-3">
 
@@ -115,7 +164,15 @@
                         required
                     >
 
+                    <div
+                        id="emailStatus"
+                        class="username-status"
+                    ></div>
+
                 </div>
+
+
+                <!-- Password -->
 
                 <div class="mb-3">
 
@@ -126,16 +183,38 @@
                         Password
                     </label>
 
-                    <input
-                        type="password"
-                        id="password"
-                        name="password"
-                        class="form-control"
-                        autocomplete="new-password"
-                        required
-                    >
+                    <div class="password-group">
+
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            class="form-control"
+                            autocomplete="new-password"
+                            minlength="8"
+                            required
+                        >
+
+                        <button
+                            type="button"
+                            class="password-toggle"
+                            id="passwordToggle"
+                            aria-label="Show password"
+                        >
+                            👁️
+                        </button>
+
+                    </div>
+
+                    <div
+                        id="passwordStatus"
+                        class="password-status"
+                    ></div>
 
                 </div>
+
+
+                <!-- Confirm Password -->
 
                 <div class="mb-4">
 
@@ -146,16 +225,38 @@
                         Confirm Password
                     </label>
 
-                    <input
-                        type="password"
-                        id="confirm_password"
-                        name="confirm_password"
-                        class="form-control"
-                        autocomplete="new-password"
-                        required
-                    >
+                    <div class="password-group">
+
+                        <input
+                            type="password"
+                            id="confirm_password"
+                            name="confirm_password"
+                            class="form-control"
+                            autocomplete="new-password"
+                            minlength="8"
+                            required
+                        >
+
+                        <button
+                            type="button"
+                            class="password-toggle"
+                            id="confirmPasswordToggle"
+                            aria-label="Show password"
+                        >
+                            👁️
+                        </button>
+
+                    </div>
+
+                    <div
+                        id="confirmPasswordStatus"
+                        class="password-status"
+                    ></div>
 
                 </div>
+
+
+                <!-- Register -->
 
                 <button
                     type="submit"
@@ -166,13 +267,17 @@
 
             </form>
 
+
             <div class="text-center mt-4">
 
                 <p class="text-muted mb-0">
+
                     Already have an account?
+
                     <a href="{{ url_for('login') }}">
                         Login
                     </a>
+
                 </p>
 
             </div>
@@ -183,9 +288,341 @@
 
 </div>
 
-<script
-    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-></script>
+
+<script>
+
+    // ==========================================
+    // Username live availability check
+    // ==========================================
+
+    const usernameInput =
+        document.getElementById("username");
+
+    const usernameStatus =
+        document.getElementById("usernameStatus");
+
+    let usernameTimer;
+
+    usernameInput.addEventListener("input", function () {
+
+        const username =
+            usernameInput.value.trim();
+
+        clearTimeout(usernameTimer);
+
+        usernameStatus.textContent = "";
+        usernameStatus.className = "username-status";
+
+        if (username.length < 3) {
+            return;
+        }
+
+        usernameStatus.textContent = "Checking...";
+        usernameStatus.classList.add("text-muted");
+
+        usernameTimer = setTimeout(async function () {
+
+            try {
+
+                const response = await fetch(
+                    `/check-username?username=${encodeURIComponent(username)}`
+                );
+
+                const data = await response.json();
+
+                if (usernameInput.value.trim() !== username) {
+                    return;
+                }
+
+                usernameStatus.textContent =
+                    data.message;
+
+                usernameStatus.className =
+                    "username-status " +
+                    (data.available
+                        ? "text-success"
+                        : "text-danger");
+
+            } catch (error) {
+
+                usernameStatus.textContent =
+                    "Unable to check username.";
+
+                usernameStatus.className =
+                    "username-status text-danger";
+            }
+
+        }, 300);
+
+    });
+
+
+    // ==========================================
+    // Email live availability check
+    // ==========================================
+
+    const emailInput =
+        document.getElementById("email");
+
+    const emailStatus =
+        document.getElementById("emailStatus");
+
+    let emailTimer;
+
+    emailInput.addEventListener("input", function () {
+
+        const email =
+            emailInput.value.trim().toLowerCase();
+
+        clearTimeout(emailTimer);
+
+        emailStatus.textContent = "";
+        emailStatus.className = "username-status";
+
+        if (!email) {
+            return;
+        }
+
+        if (!emailInput.validity.valid) {
+
+            emailStatus.textContent =
+                "Please enter a valid email address.";
+
+            emailStatus.classList.add("text-danger");
+
+            return;
+        }
+
+        emailStatus.textContent = "Checking...";
+        emailStatus.classList.add("text-muted");
+
+        emailTimer = setTimeout(async function () {
+
+            try {
+
+                const response = await fetch(
+                    `/check-email?email=${encodeURIComponent(email)}`
+                );
+
+                const data = await response.json();
+
+                if (
+                    emailInput.value.trim().toLowerCase()
+                    !== email
+                ) {
+                    return;
+                }
+
+                emailStatus.textContent =
+                    data.message;
+
+                emailStatus.className =
+                    "username-status " +
+                    (data.available
+                        ? "text-success"
+                        : "text-danger");
+
+            } catch (error) {
+
+                emailStatus.textContent =
+                    "Unable to check email.";
+
+                emailStatus.className =
+                    "username-status text-danger";
+            }
+
+        }, 300);
+
+    });
+
+
+    // ==========================================
+    // Password elements
+    // ==========================================
+
+    const passwordInput =
+        document.getElementById("password");
+
+    const confirmPasswordInput =
+        document.getElementById("confirm_password");
+
+    const passwordStatus =
+        document.getElementById("passwordStatus");
+
+    const confirmPasswordStatus =
+        document.getElementById("confirmPasswordStatus");
+
+
+    // ==========================================
+    // Password length validation
+    // ==========================================
+
+    function checkPassword() {
+
+        const password =
+            passwordInput.value;
+
+        if (!password) {
+
+            passwordStatus.textContent = "";
+            passwordStatus.className = "password-status";
+
+            return;
+        }
+
+        if (password.length < 8) {
+
+            passwordStatus.textContent =
+                "Password must be at least 8 characters.";
+
+            passwordStatus.className =
+                "password-status text-danger";
+
+        } else {
+
+            passwordStatus.textContent =
+                "Password length is valid.";
+
+            passwordStatus.className =
+                "password-status text-success";
+        }
+
+        checkPasswordMatch();
+    }
+
+
+    // ==========================================
+    // Confirm password validation
+    // ==========================================
+
+    function checkPasswordMatch() {
+
+        const password =
+            passwordInput.value;
+
+        const confirmPassword =
+            confirmPasswordInput.value;
+
+        if (!confirmPassword) {
+
+            confirmPasswordStatus.textContent = "";
+            confirmPasswordStatus.className =
+                "password-status";
+
+            return;
+        }
+
+        if (password !== confirmPassword) {
+
+            confirmPasswordStatus.textContent =
+                "Passwords do not match.";
+
+            confirmPasswordStatus.className =
+                "password-status text-danger";
+
+        } else {
+
+            confirmPasswordStatus.textContent =
+                "Passwords match.";
+
+            confirmPasswordStatus.className =
+                "password-status text-success";
+        }
+    }
+
+
+    passwordInput.addEventListener(
+        "input",
+        checkPassword
+    );
+
+    confirmPasswordInput.addEventListener(
+        "input",
+        checkPasswordMatch
+    );
+
+
+    // ==========================================
+    // Show / hide password
+    // ==========================================
+
+    const passwordToggle =
+        document.getElementById("passwordToggle");
+
+    passwordToggle.addEventListener(
+        "click",
+        function () {
+
+            if (passwordInput.type === "password") {
+
+                passwordInput.type = "text";
+
+                passwordToggle.textContent = "🙈";
+
+                passwordToggle.setAttribute(
+                    "aria-label",
+                    "Hide password"
+                );
+
+            } else {
+
+                passwordInput.type = "password";
+
+                passwordToggle.textContent = "👁️";
+
+                passwordToggle.setAttribute(
+                    "aria-label",
+                    "Show password"
+                );
+            }
+        }
+    );
+
+
+    // ==========================================
+    // Show / hide confirm password
+    // ==========================================
+
+    const confirmPasswordToggle =
+        document.getElementById(
+            "confirmPasswordToggle"
+        );
+
+    confirmPasswordToggle.addEventListener(
+        "click",
+        function () {
+
+            if (
+                confirmPasswordInput.type === "password"
+            ) {
+
+                confirmPasswordInput.type = "text";
+
+                confirmPasswordToggle.textContent =
+                    "🙈";
+
+                confirmPasswordToggle.setAttribute(
+                    "aria-label",
+                    "Hide password"
+                );
+
+            } else {
+
+                confirmPasswordInput.type =
+                    "password";
+
+                confirmPasswordToggle.textContent =
+                    "👁️";
+
+                confirmPasswordToggle.setAttribute(
+                    "aria-label",
+                    "Show password"
+                );
+            }
+        }
+    );
+
+</script>
 
 </body>
 

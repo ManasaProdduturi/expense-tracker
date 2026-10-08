@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, session, redirect, url_for
+from flask import Flask, render_template, request, session, redirect, url_for, jsonify
 from datetime import date
 import sqlite3
 import os
@@ -473,63 +473,72 @@ def register():
         password = request.form["password"]
         confirm_password = request.form["confirm_password"]
 
-        # Validate username
-        if not username:
+        connection = get_db_connection()
+
+        # Check username first
+        existing_username = connection.execute(
+            "SELECT id FROM users WHERE username = ?",
+            (username,)
+        ).fetchone()
+
+        if existing_username:
+            connection.close()
+
             return render_template(
                 "register.html",
-                error="Username cannot be empty."
+                error="Username already exists.",
+                username=username,
+                email=email
             )
 
-        if len(username) < 3:
+        # Check email second
+        existing_email = connection.execute(
+            "SELECT id FROM users WHERE email = ?",
+            (email,)
+        ).fetchone()
+
+        if existing_email:
+            connection.close()
+
             return render_template(
                 "register.html",
-                error="Username must be at least 3 characters long."
+                error="Email already exists.",
+                username=username,
+                email=email
             )
 
-        # Validate email
-        if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
-            return render_template(
-                "register.html",
-                error="Please enter a valid email address."
-            )
+        connection.close()
 
-        # Validate password
+        # Validate password after account checks
         if len(password) < 8:
             return render_template(
                 "register.html",
-                error="Password must be at least 8 characters long."
+                error="Password must be at least 8 characters long.",
+                username=username,
+                email=email
             )
 
-        # Confirm password
         if password != confirm_password:
             return render_template(
                 "register.html",
-                error="Passwords do not match."
+                error="Passwords do not match.",
+                username=username,
+                email=email
             )
 
         password_hash = generate_password_hash(password)
 
         connection = get_db_connection()
 
-        try:
-            connection.execute(
-                """
-                INSERT INTO users (username, email, password_hash)
-                VALUES (?, ?, ?)
-                """,
-                (username, email, password_hash)
-            )
+        connection.execute(
+            """
+            INSERT INTO users (username, email, password_hash)
+            VALUES (?, ?, ?)
+            """,
+            (username, email, password_hash)
+        )
 
-            connection.commit()
-
-        except sqlite3.IntegrityError:
-            connection.close()
-
-            return render_template(
-                "register.html",
-                error="That username or email is already registered."
-            )
-
+        connection.commit()
         connection.close()
 
         return redirect(url_for("login"))
@@ -558,19 +567,21 @@ def login():
 
         connection.close()
 
+        # Account does not exist
         if user is None:
             return render_template(
                 "login.html",
-                error="Invalid username or password."
+                error="Account does not exist."
             )
 
+        # Incorrect password
         if not check_password_hash(
             user["password_hash"],
             password
         ):
             return render_template(
                 "login.html",
-                error="Invalid username or password."
+                error="Incorrect password."
             )
 
         session.clear()
@@ -767,6 +778,65 @@ def dashboard():
         spending_over_time=spending_over_time,
         period=period
     )
+
+
+@app.route("/check-username")
+def check_username():
+    username = request.args.get("username", "").strip()
+
+    if not username:
+        return jsonify({"available": False, "message": ""})
+
+    connection = get_db_connection()
+
+    user = connection.execute(
+        "SELECT id FROM users WHERE username = ?",
+        (username,)
+    ).fetchone()
+
+    connection.close()
+
+    if user:
+        return jsonify({
+            "available": False,
+            "message": "Username is already taken."
+        })
+
+    return jsonify({
+        "available": True,
+        "message": "Username is available."
+    })
+
+
+@app.route("/check-email")
+def check_email():
+    email = request.args.get("email", "").strip().lower()
+
+    if not email:
+        return jsonify({
+            "available": False,
+            "message": ""
+        })
+
+    connection = get_db_connection()
+
+    user = connection.execute(
+        "SELECT id FROM users WHERE email = ?",
+        (email,)
+    ).fetchone()
+
+    connection.close()
+
+    if user:
+        return jsonify({
+            "available": False,
+            "message": "Email is already registered."
+        })
+
+    return jsonify({
+        "available": True,
+        "message": "Email is available."
+    })
 
 
 if __name__ == "__main__":
