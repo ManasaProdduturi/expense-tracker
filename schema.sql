@@ -34,3 +34,12 @@ INSERT OR IGNORE INTO categories (name) VALUES
     ('Subscriptions'),
     ('Personal'),
     ('Other');
+
+
+CREATE TABLE IF NOT EXISTS password_reset_otps (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    otp_hash TEXT NOT NULL,
+    expires_at TEXT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);

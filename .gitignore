@@ -4,3 +4,4 @@ __pycache__/
 database.db
 Expense Tracker Project Documentation.md
 doc.txt
+.env

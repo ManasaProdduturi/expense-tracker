@@ -1,10 +1,13 @@
 from flask import Flask, render_template, request, session, redirect, url_for, jsonify
-from datetime import date
-import sqlite3
+from datetime import date, datetime, timedelta
 import os
 from database import get_db_connection
 from werkzeug.security import generate_password_hash, check_password_hash
 import re
+import secrets
+import smtplib
+from email.message import EmailMessage
+from dotenv import load_dotenv
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key")
@@ -13,6 +16,53 @@ app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key")
 def login_required():
     if "user_id" not in session:
         return redirect(url_for("login"))
+
+
+load_dotenv()
+
+
+def send_otp_email(recipient_email, otp):
+    message = EmailMessage()
+
+    message["Subject"] = "Expense Tracker - Password Reset OTP"
+    message["From"] = os.environ.get("EMAIL_FROM")
+    message["To"] = recipient_email
+
+    message.set_content(
+        f"""Hello,
+
+We received a request to reset your Expense Tracker password.
+
+Your password reset OTP is:
+
+{otp}
+
+This OTP will expire in 10 minutes.
+
+If you did not request a password reset, you can safely ignore this email.
+
+Regards,
+Expense Tracker
+"""
+    )
+
+    smtp_host = os.environ.get("SMTP_HOST")
+    smtp_port = int(os.environ.get("SMTP_PORT", 465))
+    smtp_username = os.environ.get("SMTP_USERNAME")
+    smtp_password = os.environ.get("SMTP_PASSWORD")
+
+    with smtplib.SMTP_SSL(
+        smtp_host,
+        smtp_port,
+        timeout=30
+    ) as server:
+
+        server.login(
+            smtp_username,
+            smtp_password
+        )
+
+        server.send_message(message)
 
 
 @app.route("/expenses/add", methods=["GET", "POST"])
@@ -549,42 +599,31 @@ def register():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        username = request.form["username"].strip()
+        username_or_email = request.form["username_or_email"].strip()
         password = request.form["password"]
-
-        if not username or not password:
-            return render_template(
-                "login.html",
-                error="Username and password are required."
-            )
 
         connection = get_db_connection()
 
         user = connection.execute(
-            "SELECT * FROM users WHERE username = ?",
-            (username,)
+            """
+            SELECT *
+            FROM users
+            WHERE username = ? OR email = ?
+            """,
+            (username_or_email, username_or_email.lower())
         ).fetchone()
 
         connection.close()
 
-        # Account does not exist
-        if user is None:
-            return render_template(
-                "login.html",
-                error="Account does not exist."
-            )
-
-        # Incorrect password
-        if not check_password_hash(
+        if not user or not check_password_hash(
             user["password_hash"],
             password
         ):
             return render_template(
                 "login.html",
-                error="Incorrect password."
+                error="Invalid username/email or password."
             )
 
-        session.clear()
         session["user_id"] = user["id"]
 
         return redirect(url_for("home"))
@@ -837,6 +876,221 @@ def check_email():
         "available": True,
         "message": "Email is available."
     })
+
+    
+
+@app.route("/forgot-password", methods=["GET", "POST"])
+def forgot_password():
+    if request.method == "POST":
+        email = request.form["email"].strip().lower()
+
+        connection = get_db_connection()
+
+        user = connection.execute(
+            "SELECT id FROM users WHERE email = ?",
+            (email,)
+        ).fetchone()
+
+        connection.close()
+
+        if not user:
+            return render_template(
+                "forgot_password.html",
+                error="No account is registered with that email."
+            )
+
+        # Generate a secure 6-digit OTP
+        otp = f"{secrets.randbelow(1000000):06d}"
+
+        # Hash the OTP before storing it
+        otp_hash = generate_password_hash(otp)
+
+        # OTP expires in 10 minutes
+        expires_at = datetime.now() + timedelta(minutes=10)
+
+        connection = get_db_connection()
+
+        # Remove previous OTPs for this user
+        connection.execute(
+            "DELETE FROM password_reset_otps WHERE user_id = ?",
+            (user["id"],)
+        )
+
+        connection.execute(
+            """
+            INSERT INTO password_reset_otps
+            (user_id, otp_hash, expires_at)
+            VALUES (?, ?, ?)
+            """,
+            (
+                user["id"],
+                otp_hash,
+                expires_at.isoformat()
+            )
+        )
+
+        connection.commit()
+        connection.close()
+
+        try:
+            send_otp_email(email, otp)
+        except Exception as e:
+            print("OTP EMAIL ERROR:", e)
+
+            return render_template(
+                "forgot_password.html",
+                error="Unable to send OTP. Please try again later."
+            )
+
+        return redirect(
+            url_for(
+                "verify_otp",
+                email=email
+            )
+        )
+
+    return render_template("forgot_password.html")
+
+
+@app.route("/verify-otp", methods=["GET", "POST"])
+def verify_otp():
+    email = request.args.get("email", "").strip().lower()
+
+    if not email:
+        return redirect(url_for("forgot_password"))
+
+    connection = get_db_connection()
+
+    user = connection.execute(
+        "SELECT id FROM users WHERE email = ?",
+        (email,)
+    ).fetchone()
+
+    if not user:
+        connection.close()
+        return redirect(url_for("forgot_password"))
+
+    if request.method == "POST":
+
+        otp = request.form["otp"].strip()
+
+        reset_record = connection.execute(
+            """
+            SELECT id, otp_hash, expires_at
+            FROM password_reset_otps
+            WHERE user_id = ?
+            ORDER BY id DESC
+            LIMIT 1
+            """,
+            (user["id"],)
+        ).fetchone()
+
+        if not reset_record:
+            connection.close()
+
+            return render_template(
+                "verify_otp.html",
+                email=email,
+                error="No valid OTP was found. Please request a new one."
+            )
+
+        expires_at = datetime.fromisoformat(
+            reset_record["expires_at"]
+        )
+
+        if datetime.now() > expires_at:
+
+            connection.execute(
+                "DELETE FROM password_reset_otps WHERE user_id = ?",
+                (user["id"],)
+            )
+
+            connection.commit()
+            connection.close()
+
+            return render_template(
+                "verify_otp.html",
+                email=email,
+                error="OTP has expired. Please request a new one."
+            )
+
+        if not check_password_hash(
+            reset_record["otp_hash"],
+            otp
+        ):
+            connection.close()
+
+            return render_template(
+                "verify_otp.html",
+                email=email,
+                error="Invalid OTP."
+            )
+
+        # OTP is valid
+        connection.execute(
+            "DELETE FROM password_reset_otps WHERE user_id = ?",
+            (user["id"],)
+        )
+
+        connection.commit()
+        connection.close()
+
+        session["reset_user_id"] = user["id"]
+
+        return redirect(url_for("reset_password"))
+
+    connection.close()
+
+    return render_template(
+        "verify_otp.html",
+        email=email
+    )
+
+
+@app.route("/reset-password", methods=["GET", "POST"])
+def reset_password():
+    user_id = session.get("reset_user_id")
+
+    if not user_id:
+        return redirect(url_for("forgot_password"))
+
+    if request.method == "POST":
+        password = request.form["password"]
+        confirm_password = request.form["confirm_password"]
+
+        if len(password) < 8:
+            return render_template(
+                "reset_password.html",
+                error="Password must be at least 8 characters long."
+            )
+
+        if password != confirm_password:
+            return render_template(
+                "reset_password.html",
+                error="Passwords do not match."
+            )
+
+        password_hash = generate_password_hash(password)
+
+        connection = get_db_connection()
+
+        connection.execute(
+            """
+            UPDATE users
+            SET password_hash = ?
+            WHERE id = ?
+            """,
+            (password_hash, user_id)
+        )
+
+        connection.commit()
+        connection.close()
+
+        session.pop("reset_user_id", None)
+
+        return redirect(url_for("login"))
+
+    return render_template("reset_password.html")
 
 
 if __name__ == "__main__":

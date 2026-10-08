@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
 
@@ -50,17 +51,22 @@
         <div class="card-body p-4">
 
             {% if error %}
+
                 <div
                     class="alert alert-danger d-flex align-items-center mb-4"
                     role="alert"
                 >
+
                     <span class="me-2">⚠️</span>
 
                     <div>
                         {{ error }}
                     </div>
+
                 </div>
+
             {% endif %}
+
 
             <div class="text-center mb-4">
 
@@ -74,27 +80,33 @@
 
             </div>
 
+
             <form method="POST">
+
+                <!-- Username -->
 
                 <div class="mb-3">
 
                     <label
-                        for="username"
+                        for="username_or_email"
                         class="form-label"
                     >
-                        Username
+                        Username or Email
                     </label>
 
                     <input
                         type="text"
-                        id="username"
-                        name="username"
+                        id="username_or_email"
+                        name="username_or_email"
                         class="form-control"
                         autocomplete="username"
                         required
                     >
 
                 </div>
+
+
+                <!-- Password -->
 
                 <div class="mb-4">
 
@@ -116,6 +128,9 @@
 
                 </div>
 
+
+                <!-- Login -->
+
                 <button
                     type="submit"
                     class="btn btn-primary login-button"
@@ -125,13 +140,30 @@
 
             </form>
 
-            <div class="text-center mt-4">
+
+            <!-- Forgot Password -->
+
+            <div class="text-center mt-3">
+
+                <a href="{{ url_for('forgot_password') }}">
+                    Forgot Password?
+                </a>
+
+            </div>
+
+
+            <!-- Register -->
+
+            <div class="text-center mt-3">
 
                 <p class="text-muted mb-0">
+
                     Don't have an account?
+
                     <a href="{{ url_for('register') }}">
                         Register
                     </a>
+
                 </p>
 
             </div>
@@ -142,9 +174,11 @@
 
 </div>
 
+
 <script
     src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
 ></script>
 
 </body>
+
 </html>
