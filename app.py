@@ -1749,19 +1749,12 @@ def change_password():
 
 
     user = connection.execute(
-
-        """
-
-        SELECT password_hash
-
-        FROM users
-
-        WHERE id = ?
-
-        """,
-
-        (session["user_id"],)
-
+    """
+    SELECT username, email, password_hash
+    FROM users
+    WHERE id = ?
+    """,
+    (session["user_id"],)
     ).fetchone()
 
 
