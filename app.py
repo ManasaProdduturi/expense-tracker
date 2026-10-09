@@ -10,10 +10,11 @@ from email.message import EmailMessage
 from dotenv import load_dotenv
 
 
+load_dotenv()
+
 app = Flask(__name__)
 
-app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key")
-
+app.secret_key = os.environ["SECRET_KEY"]
 
 def login_required():
 
@@ -22,7 +23,6 @@ def login_required():
         return redirect(url_for("login"))
 
 
-load_dotenv()
 
 
 def send_otp_email(recipient_email, otp):
@@ -1031,7 +1031,7 @@ def edit_expense(expense_id):
 
 
 
-@app.route("/expenses/<int:expense_id>/delete")
+@app.route("/expenses/<int:expense_id>/delete", methods=["POST"])
 
 def delete_expense(expense_id):
 
