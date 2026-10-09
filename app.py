@@ -225,7 +225,7 @@ def add_expense():
 
 
 
-            if not math.isfinite(amount) or amount <= 0:
+            if not math.isfinite(amount) or amount <= 0 or amount > 10000000:
                 raise ValueError
 
 
@@ -252,7 +252,7 @@ def add_expense():
 
                 today=date.today().isoformat(),
 
-                error="Amount must be a positive number."
+                error="Amount must be greater than ₹0 and cannot exceed ₹1 crore."
 
             )
 
@@ -1095,7 +1095,14 @@ def register():
                 username=username,
                 email=request.form["email"].strip().lower()
             )
-        email = request.form["email"].strip().lower()
+        email = request.form["email"].strip().lower()   
+        if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
+            return render_template(
+                "register.html",
+                error="Please enter a valid email address.",
+                username=username,
+                email=email
+            )
         password = request.form["password"]
         confirm_password = request.form["confirm_password"]
 
