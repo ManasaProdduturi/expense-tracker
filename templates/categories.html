@@ -44,7 +44,67 @@
 
 <body>
 
+<nav class="navbar navbar-light bg-white shadow-sm">
+    <div class="container">
+
+        <a
+            class="navbar-brand"
+            href="{{ url_for('home') }}"
+        >
+            Expense Tracker
+        </a>
+
+        <div class="dropdown">
+            <button
+                class="btn btn-outline-secondary"
+                type="button"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+                title="Open menu"
+            >
+                ☰
+            </button>
+
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li>
+                    <a class="dropdown-item" href="{{ url_for('home') }}">
+                        🏠 Home
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item" href="{{ url_for('dashboard') }}">
+                        📊 Dashboard
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item" href="{{ url_for('expenses') }}">
+                        💰 Expenses
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item" href="{{ url_for('add_expense') }}">
+                        ➕ Add Expense
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item" href="{{ url_for('categories') }}">
+                        📂 Categories
+                    </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <a class="dropdown-item text-danger" href="{{ url_for('logout') }}">
+                        🚪 Logout
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+    </div>
+</nav>
+
 <div class="container py-5">
+
 
     <div class="card categories-card shadow-sm">
 
