@@ -8,6 +8,7 @@ import secrets
 import smtplib
 from email.message import EmailMessage
 from dotenv import load_dotenv
+import math
 
 
 load_dotenv()
@@ -224,8 +225,7 @@ def add_expense():
 
 
 
-            if amount <= 0:
-
+            if not math.isfinite(amount) or amount <= 0:
                 raise ValueError
 
 
@@ -782,8 +782,7 @@ def edit_expense(expense_id):
 
 
 
-            if amount <= 0:
-
+            if not math.isfinite(amount) or amount <= 0:
                 raise ValueError
 
 
@@ -1089,10 +1088,10 @@ def register():
     if request.method == "POST":
 
         username = request.form["username"].strip()
-        if not re.fullmatch(r"[A-Za-z0-9_]+", username):
+        if not re.fullmatch(r"[A-Za-z0-9_]{3,30}", username):
             return render_template(
                 "register.html",
-                error="Username can contain only letters, numbers, and underscores.",
+                error="Username must be 3–30 characters and contain only letters, numbers, and underscores.",
                 username=username,
                 email=request.form["email"].strip().lower()
             )
@@ -1270,6 +1269,7 @@ def login():
 
 
 
+        session.clear()
         session["user_id"] = user["id"]
 
 

@@ -101,6 +101,8 @@
                         autocomplete="username"
                         pattern="[A-Za-z0-9_]+"
                         title="Username can contain only letters, numbers, and underscores."
+                        minlength="3"
+                        maxlength="30"
                         required
                     >
 
@@ -651,6 +653,6 @@ username.addEventListener("input", function () {
 
 {% endif %}
 
-{% iinclude "footer.html" %}
+{% include "footer.html" %}
 </body>
 </html>
