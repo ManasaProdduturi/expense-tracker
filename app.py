@@ -1354,6 +1354,8 @@ def dashboard():
 
     period = request.args.get("period", "all")
 
+    if period not in ("all", "month", "last_month", "year"):
+        return redirect(url_for("dashboard"))
 
 
     connection = get_db_connection()
