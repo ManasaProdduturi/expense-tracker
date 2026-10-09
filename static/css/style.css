@@ -92,3 +92,63 @@ body.dark-mode {
     --bs-table-bg: #242729;
     --bs-table-border-color: #555;
 }
+
+
+/* Shared page footer */
+.app-footer {
+    background-color: #f1f3f5;
+    color: #495057;
+    border-top: 1px solid #dee2e6;
+}
+
+/* Login page */
+.login-card {
+    max-width: 520px;
+    margin: 0 auto;
+    border: none;
+    border-radius: 16px;
+}
+
+.login-button {
+    width: 100%;
+}
+
+/* Dark theme */
+body.dark-mode {
+    background-color: #181a1b;
+    color: #f1f1f1;
+}
+
+.dark-mode .card,
+.dark-mode .dropdown-menu,
+.dark-mode .modal-content {
+    background-color: #242729;
+    color: #f1f1f1;
+}
+
+.dark-mode .form-control,
+.dark-mode .form-select {
+    background-color: #303438;
+    color: #f1f1f1;
+    border-color: #555;
+}
+
+.dark-mode .form-control::placeholder {
+    color: #b8bec4;
+}
+
+.dark-mode .text-muted {
+    color: #b8bec4 !important;
+}
+
+.dark-mode .table {
+    --bs-table-color: #f1f1f1;
+    --bs-table-bg: #242729;
+    --bs-table-border-color: #555;
+}
+
+.dark-mode .app-footer {
+    background-color: #242729;
+    color: #f1f1f1;
+    border-top-color: #444;
+}

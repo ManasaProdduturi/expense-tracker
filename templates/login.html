@@ -16,6 +16,9 @@
         rel="stylesheet"
     >
 
+    <link rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}">
+
     <style>
         body {
             background-color: #f8f9fa;
@@ -44,7 +47,7 @@
 
 <body>
 
-<div class="container py-5">
+<div class="container py-5 login-page">
 
     <div class="card login-card shadow-sm">
 
@@ -123,7 +126,9 @@
                             type="button"
                             class="btn btn-outline-secondary"
                             id="togglePassword"
-                        >Show</button>
+                            aria-label="Show password"
+                            title="Show password"
+                        >👁️</button>
                     </div>
                 </div>
 
@@ -179,30 +184,19 @@
 ></script>
 
 <script>
-    const passwordInput = document.getElementById("password");
-    const togglePassword = document.getElementById("togglePassword");
+const password = document.getElementById("password");
+const togglePassword = document.getElementById("togglePassword");
 
-    togglePassword.addEventListener("click", () => {
-        const showPassword = passwordInput.type === "password";
+togglePassword.addEventListener("click", function () {
+    const showing = password.type === "password";
 
-        passwordInput.type = showPassword ? "text" : "password";
-        togglePassword.textContent = showPassword ? "Hide" : "Show";
-        togglePassword.setAttribute(
-            "aria-label",
-            showPassword ? "Hide password" : "Show password"
-        );
-    });
-</script>
-
-<script>
-document.getElementById("togglePassword").addEventListener("click", function () {
-    const input = document.getElementById("password");
-    const showing = input.type === "password";
-
-    input.type = showing ? "text" : "password";
-    this.textContent = showing ? "Hide" : "Show";
+    password.type = showing ? "text" : "password";
+    this.textContent = showing ? "🙈" : "👁️";
+    this.setAttribute("aria-label", showing ? "Hide password" : "Show password");
+    this.setAttribute("title", showing ? "Hide password" : "Show password");
 });
 </script>
+
 
 {% include "footer.html" %}
 </body>

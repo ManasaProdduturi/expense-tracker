@@ -1,147 +1,113 @@
 {% extends "layout.html" %}
 
-{% block title %}Account{% endblock %}
+{% block title %}Profile{% endblock %}
 
 {% block content %}
-<hr>
-<h4 class="mb-3">Appearance</h4>
-
-<div class="form-check form-switch mb-4">
-    <input
-        class="form-check-input"
-        type="checkbox"
-        id="darkModeToggle"
-    >
-    <label class="form-check-label" for="darkModeToggle">
-        Enable dark mode
-    </label>
-</div>
-
-<div class="container mt-5">
+<div class="container py-5">
     <div class="row justify-content-center">
-        <div class="col-md-7 col-lg-6">
-
+        <div class="col-md-8 col-lg-7">
             <div class="card shadow-sm">
                 <div class="card-body p-4">
+                    <h2 class="text-center mb-4">My Profile</h2>
 
-                    <h2 class="text-center mb-4">Account</h2>
+                    {% for category, message in get_flashed_messages(with_categories=true) %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
 
                     {% if error %}
-                        <div class="alert alert-danger">
-                            {{ error }}
-                        </div>
+                        <div class="alert alert-danger">{{ error }}</div>
                     {% endif %}
+
+                    <h4>Account Details</h4>
 
                     <div class="mb-3">
                         <label class="form-label">Username</label>
-                        <input
-                            type="text"
-                            class="form-control"
-                            value="{{ user['username'] }}"
-                            readonly
-                        >
+                        <input class="form-control" value="{{ user['username'] }}" readonly>
                     </div>
 
                     <div class="mb-4">
                         <label class="form-label">Email</label>
-                        <input
-                            type="email"
-                            class="form-control"
-                            value="{{ user['email'] }}"
-                            readonly
-                        >
+                        <input type="email" class="form-control" value="{{ user['email'] }}" readonly>
                     </div>
 
                     <hr>
+                    <h4 class="mb-3">Appearance</h4>
 
+                    <div class="form-check form-switch mb-4">
+                        <input class="form-check-input" type="checkbox" id="darkModeToggle">
+                        <label class="form-check-label" for="darkModeToggle">
+                            Enable dark mode
+                        </label>
+                    </div>
+
+                    <hr>
+                    <h4 class="mb-3">Currency</h4>
+                    <p class="text-muted">
+                        Changing currency changes the displayed currency symbol only.
+                        Existing expense amounts will not be converted.
+                    </p>
+
+                    <form action="{{ url_for('change_currency') }}" method="post" class="mb-4">
+                        <label for="currency" class="form-label">Preferred currency</label>
+                        <select id="currency" name="currency" class="form-select mb-3" required>
+                            {% for code, symbol in [
+                                ('INR', '₹'), ('USD', '$'), ('GBP', '£'),
+                                ('EUR', '€'), ('JPY', '¥'), ('KRW', '₩'),
+                                ('AUD', '$'), ('CAD', '$')
+                            ] %}
+                                <option value="{{ code }}"
+                                    {% if user['currency'] == code %}selected{% endif %}>
+                                    {{ code }} ({{ symbol }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="btn btn-primary w-100">
+                            Save Currency
+                        </button>
+                    </form>
+
+                    <hr>
                     <h4 class="mb-3">Change Password</h4>
 
-                    <form
-                        action="{{ url_for('change_password') }}"
-                        method="post"
-                    >
+                    <form action="{{ url_for('change_password') }}" method="post">
                         <div class="mb-3">
-                            <label
-                                for="current_password"
-                                class="form-label"
-                            >
-                                Current Password
-                            </label>
-
-                            <input
-                                type="password"
-                                id="current_password"
-                                name="current_password"
-                                class="form-control"
-                                required
-                            >
+                            <label for="current_password" class="form-label">Current Password</label>
+                            <input type="password" id="current_password" name="current_password"
+                                   class="form-control" autocomplete="current-password" required>
                         </div>
 
                         <div class="mb-3">
-                            <label
-                                for="new_password"
-                                class="form-label"
-                            >
-                                New Password
-                            </label>
-
-                            <input
-                                type="password"
-                                id="new_password"
-                                name="new_password"
-                                class="form-control"
-                                minlength="8"
-                                required
-                            >
+                            <label for="new_password" class="form-label">New Password</label>
+                            <input type="password" id="new_password" name="new_password"
+                                   class="form-control" minlength="8"
+                                   autocomplete="new-password" required>
                         </div>
 
                         <div class="mb-3">
-                            <label
-                                for="confirm_password"
-                                class="form-label"
-                            >
-                                Confirm New Password
-                            </label>
-
-                            <input
-                                type="password"
-                                id="confirm_password"
-                                name="confirm_password"
-                                class="form-control"
-                                minlength="8"
-                                required
-                            >
+                            <label for="confirm_password" class="form-label">Confirm New Password</label>
+                            <input type="password" id="confirm_password" name="confirm_password"
+                                   class="form-control" minlength="8"
+                                   autocomplete="new-password" required>
                         </div>
 
-                        <button
-                            type="submit"
-                            class="btn btn-primary w-100"
-                        >
+                        <button type="submit" class="btn btn-primary w-100">
                             Change Password
                         </button>
                     </form>
 
-                        <hr class="my-4">
+                    <hr class="my-4">
+                    <h4 class="text-danger mb-3">Delete Account</h4>
+                    <p class="text-muted">
+                        Deleting your account permanently removes your expenses and account data.
+                    </p>
 
-                        <h4 class="text-danger mb-3">Delete Account</h4>
-
-                        <p class="text-muted">
-                            Deleting your account will permanently remove your
-                            expenses and account data.
-                        </p>
-
-                    <form
-                        action="{{ url_for('delete_account_request') }}"
-                        method="post"
-                    >
+                    <form action="{{ url_for('delete_account_request') }}" method="post">
                         <button type="submit" class="btn btn-outline-danger w-100">
                             Delete Account
                         </button>
                     </form>
-
                 </div>
             </div>
-
         </div>
     </div>
 </div>
