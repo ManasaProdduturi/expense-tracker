@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, session, redirect, url_for, jsonify
+from flask import Flask, render_template, request, session, redirect, url_for, jsonify, flash
 from datetime import date, datetime, timedelta
 import os
 from database import get_db_connection
@@ -16,13 +16,31 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.environ["SECRET_KEY"]
 
+CURRENCY_SYMBOLS = {
+    "INR": "₹",
+    "USD": "$",
+    "GBP": "£",
+    "EUR": "€",
+    "JPY": "¥",
+    "KRW": "₩",
+    "AUD": "$",
+    "CAD": "$",
+}
+
+@app.context_processor
+def inject_currency_symbol():
+    currency = session.get("currency", "INR")
+    return {
+        "currency_symbol": CURRENCY_SYMBOLS.get(
+            currency, CURRENCY_SYMBOLS["INR"]
+        )
+    }
+
 def login_required():
 
     if "user_id" not in session:
 
         return redirect(url_for("login"))
-
-
 
 
 def send_otp_email(recipient_email, otp):
@@ -252,7 +270,7 @@ def add_expense():
 
                 today=date.today().isoformat(),
 
-                error="Amount must be greater than ₹0 and cannot exceed ₹1 crore."
+                error="Amount must be greater than 0 and cannot exceed 10,000,000."
 
             )
 
@@ -575,9 +593,7 @@ def expenses():
             max_amount_value = float(max_amount)
 
 
-
-            if max_amount_value < 0:
-
+            if not math.isfinite(max_amount_value) or not 0 <= max_amount_value <= 10000000:
                 raise ValueError
 
 
@@ -586,7 +602,7 @@ def expenses():
 
             connection.close()
 
-            return "Maximum amount must be a valid non-negative number."
+            return "Maximum amount must be between 0 and 10,000,000."
 
 
 
@@ -1110,6 +1126,16 @@ def register():
             "recreate_confirmed",
             "0"
         )
+        currency = request.form.get("currency", "INR")
+
+        valid_currencies = {
+            "INR", "USD", "GBP", "EUR",
+            "JPY", "KRW", "AUD", "CAD"
+        }
+
+        if currency not in valid_currencies:
+            flash("Invalid currency selected.", "danger")
+            return redirect(url_for("register"))
 
         connection = get_db_connection()
 
@@ -1193,10 +1219,10 @@ def register():
         # Create the new account
         connection.execute(
             """
-            INSERT INTO users (username, email, password_hash)
-            VALUES (?, ?, ?)
+            INSERT INTO users (username, email, password_hash, currency)
+            VALUES (?, ?, ?, ?)
             """,
-            (username, email, password_hash)
+            (username, email, password_hash, currency)
         )
 
         # Only remove the deleted_users record AFTER
@@ -1275,10 +1301,9 @@ def login():
             )
 
 
-
         session.clear()
         session["user_id"] = user["id"]
-
+        session["currency"] = user["currency"]
 
 
         return redirect(url_for("home"))

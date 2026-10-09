@@ -248,7 +248,7 @@
                     type="text"
                     name="search"
                     value="{{ search }}"
-                    placeholder="Search expenses..."
+                    placeholder="Search expense description..."
                     maxlength="100"
                 >
 
@@ -321,7 +321,7 @@
                     name="min_amount"
                     value="{{ min_amount }}"
                     class="amount-filter"
-                    placeholder="₹ Min"
+                    placeholder="{{ currency_symbol }} Min"
                     min="0"
                     step="0.01"
                     data-bs-toggle="tooltip"
@@ -333,7 +333,7 @@
                     name="max_amount"
                     value="{{ max_amount }}"
                     class="amount-filter"
-                    placeholder="₹ Max"
+                    placeholder="{{ currency_symbol }} Max"
                     min="0"
                     step="0.01"
                     data-bs-toggle="tooltip"
@@ -395,7 +395,7 @@
                                     </td>
 
                                     <td>
-                                        ₹{{ "%.2f"|format(expense["amount"]) }}
+                                        {{ currency_symbol }}{{ "%.2f"|format(expense["amount"]) }}
                                     </td>
 
                                     <td class="text-end px-3">
