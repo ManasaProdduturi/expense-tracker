@@ -1716,7 +1716,7 @@ def account():
 
         """
 
-        SELECT username, email
+        SELECT username, email, currency
 
         FROM users
 
@@ -1751,7 +1751,34 @@ def account():
     )
 
 
+@app.route("/account/change-currency", methods=["POST"])
+def change_currency():
+    redirect_response = login_required()
+    if redirect_response:
+        return redirect_response
 
+    valid_currencies = {
+        "INR", "USD", "GBP", "EUR",
+        "JPY", "KRW", "AUD", "CAD"
+    }
+
+    currency = request.form.get("currency", "")
+
+    if currency not in valid_currencies:
+        flash("Invalid currency selected.", "danger")
+        return redirect(url_for("account"))
+
+    connection = get_db_connection()
+    connection.execute(
+        "UPDATE users SET currency = ? WHERE id = ?",
+        (currency, session["user_id"])
+    )
+    connection.commit()
+    connection.close()
+
+    session["currency"] = currency
+    flash("Currency updated successfully.", "success")
+    return redirect(url_for("account"))
 
 
 @app.route("/account/change-password", methods=["POST"])

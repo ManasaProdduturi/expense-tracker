@@ -31,6 +31,12 @@ body {
     color: #6c757d;
 }
 
+.app-footer {
+    background-color: #f1f3f5;
+    color: #495057;
+    border-top: 1px solid #dee2e6;
+}
+
 .date-filter {
     position: relative;
     height: 38px;
@@ -56,4 +62,33 @@ body {
     height: 100%;
     opacity: 0;
     cursor: pointer;
+}
+
+body.dark-mode {
+    background-color: #181a1b;
+    color: #f1f1f1;
+}
+
+.dark-mode .card,
+.dark-mode .dropdown-menu,
+.dark-mode .modal-content {
+    background-color: #242729;
+    color: #f1f1f1;
+}
+
+.dark-mode .form-control,
+.dark-mode .form-select {
+    background-color: #303438;
+    color: #f1f1f1;
+    border-color: #555;
+}
+
+.dark-mode .text-muted {
+    color: #b8bec4 !important;
+}
+
+.dark-mode .table {
+    --bs-table-color: #f1f1f1;
+    --bs-table-bg: #242729;
+    --bs-table-border-color: #555;
 }
