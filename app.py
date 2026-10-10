@@ -205,275 +205,6 @@ Expense Tracker
         server.send_message(message)
 
 
-@app.route("/expenses/add", methods=["GET", "POST"])
-
-def add_expense():
-
-    redirect_response = login_required()
-
-
-
-    if redirect_response:
-
-        return redirect_response
-
-
-
-    connection = get_db_connection()
-
-
-
-    if request.method == "POST":
-
-        amount = request.form["amount"].strip()
-
-        expense_date = request.form["date"].strip()
-
-        category_id = request.form["category_id"].strip()
-
-        description = request.form["description"].strip()
-
-
-
-        # Validate amount
-
-        try:
-
-            amount = float(amount)
-
-
-
-            if not math.isfinite(amount) or amount <= 0 or amount > 10000000:
-                raise ValueError
-
-
-
-        except ValueError:
-
-            categories = connection.execute(
-
-                "SELECT * FROM categories ORDER BY name"
-
-            ).fetchall()
-
-
-
-            connection.close()
-
-
-
-            return render_template(
-
-                "add_expense.html",
-
-                categories=categories,
-
-                today=date.today().isoformat(),
-
-                error="Amount must be greater than 0 and cannot exceed 10,000,000."
-
-            )
-
-
-
-        # Validate date
-
-        try:
-
-            expense_date_obj = date.fromisoformat(expense_date)
-
-
-
-        except ValueError:
-
-            categories = connection.execute(
-
-                "SELECT * FROM categories ORDER BY name"
-
-            ).fetchall()
-
-
-
-            connection.close()
-
-
-
-            return render_template(
-
-                "add_expense.html",
-
-                categories=categories,
-
-                today=date.today().isoformat(),
-
-                error="Please enter a valid date."
-
-            )
-
-
-
-        if expense_date_obj > date.today():
-
-            categories = connection.execute(
-
-                "SELECT * FROM categories ORDER BY name"
-
-            ).fetchall()
-
-
-
-            connection.close()
-
-
-
-            return render_template(
-
-                "add_expense.html",
-
-                categories=categories,
-
-                today=date.today().isoformat(),
-
-                error="Expense date cannot be in the future."
-
-            )
-
-
-
-        # Validate category
-
-        category = connection.execute(
-
-            "SELECT id FROM categories WHERE id = ?",
-
-            (category_id,)
-
-        ).fetchone()
-
-
-
-        if category is None:
-
-            categories = connection.execute(
-
-                "SELECT * FROM categories ORDER BY name"
-
-            ).fetchall()
-
-
-
-            connection.close()
-
-
-
-            return render_template(
-
-                "add_expense.html",
-
-                categories=categories,
-
-                today=date.today().isoformat(),
-
-                error="Please select a valid category."
-
-            )
-
-
-
-        # Validate description length
-
-        if len(description) > 500:
-
-            categories = connection.execute(
-
-                "SELECT * FROM categories ORDER BY name"
-
-            ).fetchall()
-
-
-
-            connection.close()
-
-
-
-            return render_template(
-
-                "add_expense.html",
-
-                categories=categories,
-
-                today=date.today().isoformat(),
-
-                error="Description must be 500 characters or less."
-
-            )
-
-
-
-        connection.execute(
-
-            """
-
-            INSERT INTO expenses
-
-            (user_id, category_id, amount, date, description)
-
-            VALUES (?, ?, ?, ?, ?)
-
-            """,
-
-            (
-
-                session["user_id"],
-
-                category_id,
-
-                amount,
-
-                expense_date,
-
-                description
-
-            )
-
-        )
-
-
-
-        connection.commit()
-
-        connection.close()
-
-
-
-        return redirect(url_for("expenses"))
-
-
-
-    categories = connection.execute(
-
-        "SELECT * FROM categories ORDER BY name"
-
-    ).fetchall()
-
-
-
-    connection.close()
-
-
-
-    return render_template(
-
-        "add_expense.html",
-
-        categories=categories,
-
-        today=date.today().isoformat()
-
-    )
-
-
-
 
 
 @app.route("/expenses")
@@ -732,314 +463,199 @@ def expenses():
 
 
 
-
-
-@app.route("/expenses/<int:expense_id>/edit", methods=["GET", "POST"])
-
-def edit_expense(expense_id):
-
+@app.route("/expenses/add", methods=["GET", "POST"])
+def add_expense():
     redirect_response = login_required()
-
-
-
     if redirect_response:
-
         return redirect_response
-
-
 
     connection = get_db_connection()
 
-
-
-    expense = connection.execute(
-
-        """
-
-        SELECT *
-
-        FROM expenses
-
-        WHERE id = ? AND user_id = ?
-
-        """,
-
-        (expense_id, session["user_id"])
-
-    ).fetchone()
-
-
-
-    if expense is None:
-
-        connection.close()
-
-        return "Expense not found!"
-
-
-
-    if request.method == "POST":
-
-        amount = request.form["amount"].strip()
-
-        expense_date = request.form["date"].strip()
-
-        category_id = request.form["category_id"].strip()
-
-        description = request.form["description"].strip()
-
-
-
-        # Validate amount
-
-        try:
-
-            amount = float(amount)
-
-
-
-            if not math.isfinite(amount) or amount <= 0:
-                raise ValueError
-
-
-
-        except ValueError:
-
-            categories = connection.execute(
-
-                "SELECT * FROM categories ORDER BY name"
-
-            ).fetchall()
-
-
-
-            connection.close()
-
-
-
-            return render_template(
-
-                "edit_expense.html",
-
-                expense=expense,
-
-                categories=categories,
-
-                today=date.today().isoformat(),
-
-                error="Amount must be a positive number."
-
-            )
-
-
-
-        # Validate date
-
-        try:
-
-            expense_date_obj = date.fromisoformat(expense_date)
-
-
-
-        except ValueError:
-
-            categories = connection.execute(
-
-                "SELECT * FROM categories ORDER BY name"
-
-            ).fetchall()
-
-
-
-            connection.close()
-
-
-
-            return render_template(
-
-                "edit_expense.html",
-
-                expense=expense,
-
-                categories=categories,
-
-                today=date.today().isoformat(),
-
-                error="Please enter a valid date."
-
-            )
-
-
-
-        if expense_date_obj > date.today():
-
-            categories = connection.execute(
-
-                "SELECT * FROM categories ORDER BY name"
-
-            ).fetchall()
-
-
-
-            connection.close()
-
-
-
-            return render_template(
-
-                "edit_expense.html",
-
-                expense=expense,
-
-                categories=categories,
-
-                today=date.today().isoformat(),
-
-                error="Expense date cannot be in the future."
-
-            )
-
-
-
-        # Validate category
-
-        category = connection.execute(
-
-            "SELECT id FROM categories WHERE id = ?",
-
-            (category_id,)
-
-        ).fetchone()
-
-
-
-        if category is None:
-
-            categories = connection.execute(
-
-                "SELECT * FROM categories ORDER BY name"
-
-            ).fetchall()
-
-
-
-            connection.close()
-
-
-
-            return render_template(
-
-                "edit_expense.html",
-
-                expense=expense,
-
-                categories=categories,
-
-                today=date.today().isoformat(),
-
-                error="Please select a valid category."
-
-            )
-
-
-
-        # Validate description length
-
-        if len(description) > 500:
-
-            categories = connection.execute(
-
-                "SELECT * FROM categories ORDER BY name"
-
-            ).fetchall()
-
-
-
-            connection.close()
-
-
-
-            return render_template(
-
-                "edit_expense.html",
-
-                expense=expense,
-
-                categories=categories,
-
-                today=date.today().isoformat(),
-
-                error="Description must be 500 characters or less."
-
-            )
-
-
-
-        connection.execute(
-
-            """
-
-            UPDATE expenses
-
-            SET amount = ?, date = ?, category_id = ?, description = ?
-
-            WHERE id = ? AND user_id = ?
-
-            """,
-
-            (
-
-                amount,
-
-                expense_date,
-
-                category_id,
-
-                description,
-
-                expense_id,
-
-                session["user_id"]
-
-            )
-
+    def render_add_form(error=None):
+        categories = connection.execute(
+            "SELECT * FROM categories ORDER BY name"
+        ).fetchall()
+
+        return render_template(
+            "expense_form.html",
+            categories=categories,
+            today=date.today().isoformat(),
+            error=error,
+            is_edit=False,
         )
 
+    if request.method == "POST":
+        amount = request.form.get("amount", "").strip()
+        expense_date = request.form.get("date", "").strip()
+        category_id = request.form.get("category_id", "").strip()
+        description = request.form.get("description", "").strip()
 
+        try:
+            amount = float(amount)
+            if not math.isfinite(amount) or amount <= 0 or amount > 10000000:
+                raise ValueError
+        except ValueError:
+            response = render_add_form(
+                "Amount must be greater than 0 and cannot exceed 10,000,000."
+            )
+            connection.close()
+            return response
+
+        try:
+            expense_date_obj = date.fromisoformat(expense_date)
+        except ValueError:
+            response = render_add_form("Please enter a valid date.")
+            connection.close()
+            return response
+
+        if expense_date_obj > date.today():
+            response = render_add_form("Expense date cannot be in the future.")
+            connection.close()
+            return response
+
+        category = connection.execute(
+            "SELECT id FROM categories WHERE id = ?",
+            (category_id,),
+        ).fetchone()
+
+        if category is None:
+            response = render_add_form("Please select a valid category.")
+            connection.close()
+            return response
+
+        if len(description) > 500:
+            response = render_add_form(
+                "Description must be 500 characters or less."
+            )
+            connection.close()
+            return response
+
+        connection.execute(
+            """
+            INSERT INTO expenses
+                (user_id, category_id, amount, date, description)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (
+                session["user_id"],
+                category_id,
+                amount,
+                expense_date,
+                description,
+            ),
+        )
 
         connection.commit()
-
         connection.close()
-
-
-
         return redirect(url_for("expenses"))
 
-
-
-    categories = connection.execute(
-
-        "SELECT * FROM categories ORDER BY name"
-
-    ).fetchall()
-
-
-
+    response = render_add_form()
     connection.close()
+    return response
 
 
+@app.route("/expenses/<int:expense_id>/edit", methods=["GET", "POST"])
+def edit_expense(expense_id):
+    redirect_response = login_required()
+    if redirect_response:
+        return redirect_response
 
-    return render_template(
+    connection = get_db_connection()
 
-        "edit_expense.html",
+    expense = connection.execute(
+        """
+        SELECT *
+        FROM expenses
+        WHERE id = ? AND user_id = ?
+        """,
+        (expense_id, session["user_id"]),
+    ).fetchone()
 
-        expense=expense,
+    if expense is None:
+        connection.close()
+        return "Expense not found!", 404
 
-        categories=categories,
+    def render_edit_form(error=None):
+        categories = connection.execute(
+            "SELECT * FROM categories ORDER BY name"
+        ).fetchall()
 
-        today=date.today().isoformat()
+        return render_template(
+            "expense_form.html",
+            expense=expense,
+            categories=categories,
+            today=date.today().isoformat(),
+            error=error,
+            is_edit=True,
+        )
 
-    )
+    if request.method == "POST":
+        amount = request.form.get("amount", "").strip()
+        expense_date = request.form.get("date", "").strip()
+        category_id = request.form.get("category_id", "").strip()
+        description = request.form.get("description", "").strip()
+
+        try:
+            amount = float(amount)
+            if not math.isfinite(amount) or amount <= 0:
+                raise ValueError
+        except ValueError:
+            response = render_edit_form("Amount must be a positive number.")
+            connection.close()
+            return response
+
+        try:
+            expense_date_obj = date.fromisoformat(expense_date)
+        except ValueError:
+            response = render_edit_form("Please enter a valid date.")
+            connection.close()
+            return response
+
+        if expense_date_obj > date.today():
+            response = render_edit_form("Expense date cannot be in the future.")
+            connection.close()
+            return response
+
+        category = connection.execute(
+            "SELECT id FROM categories WHERE id = ?",
+            (category_id,),
+        ).fetchone()
+
+        if category is None:
+            response = render_edit_form("Please select a valid category.")
+            connection.close()
+            return response
+
+        if len(description) > 500:
+            response = render_edit_form(
+                "Description must be 500 characters or less."
+            )
+            connection.close()
+            return response
+
+        connection.execute(
+            """
+            UPDATE expenses
+            SET amount = ?, date = ?, category_id = ?, description = ?
+            WHERE id = ? AND user_id = ?
+            """,
+            (
+                amount,
+                expense_date,
+                category_id,
+                description,
+                expense_id,
+                session["user_id"],
+            ),
+        )
+
+        connection.commit()
+        connection.close()
+        return redirect(url_for("expenses"))
+
+    response = render_edit_form()
+    connection.close()
+    return response
 
 
 
@@ -1098,20 +714,24 @@ def home():
     return render_template("index.html")
 
 
+
 @app.route("/register", methods=["GET", "POST"])
 def register():
-
     if request.method == "POST":
-
         username = request.form["username"].strip()
+        email = request.form["email"].strip().lower()
+        password = request.form["password"]
+        confirm_password = request.form["confirm_password"]
+        currency = request.form.get("currency", "INR")
+
         if not re.fullmatch(r"[A-Za-z0-9_]{3,30}", username):
             return render_template(
                 "register.html",
                 error="Username must be 3–30 characters and contain only letters, numbers, and underscores.",
                 username=username,
-                email=request.form["email"].strip().lower()
+                email=email
             )
-        email = request.form["email"].strip().lower()   
+
         if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
             return render_template(
                 "register.html",
@@ -1119,14 +739,6 @@ def register():
                 username=username,
                 email=email
             )
-        password = request.form["password"]
-        confirm_password = request.form["confirm_password"]
-
-        recreate_confirmed = request.form.get(
-            "recreate_confirmed",
-            "0"
-        )
-        currency = request.form.get("currency", "INR")
 
         valid_currencies = {
             "INR", "USD", "GBP", "EUR",
@@ -1137,65 +749,6 @@ def register():
             flash("Invalid currency selected.", "danger")
             return redirect(url_for("register"))
 
-        connection = get_db_connection()
-
-        # Check username first
-        existing_username = connection.execute(
-            "SELECT id FROM users WHERE username = ?",
-            (username,)
-        ).fetchone()
-
-        if existing_username:
-            connection.close()
-
-            return render_template(
-                "register.html",
-                error="Username already exists.",
-                username=username,
-                email=email
-            )
-
-        # Check email second
-        existing_email = connection.execute(
-            "SELECT id FROM users WHERE email = ?",
-            (email,)
-        ).fetchone()
-
-        if existing_email:
-            connection.close()
-
-            return render_template(
-                "register.html",
-                error="Email already exists.",
-                username=username,
-                email=email
-            )
-
-        # Check whether this email belonged to a deleted account
-        deleted_user = connection.execute(
-            """
-            SELECT id
-            FROM deleted_users
-            WHERE email = ?
-            """,
-            (email,)
-        ).fetchone()
-
-        # Ask for confirmation before recreating the account
-        if deleted_user and recreate_confirmed != "1":
-            connection.close()
-
-            return render_template(
-                "register.html",
-                username=username,
-                email=email,
-                deleted_email=email,
-                password_entered=True
-            )
-
-        connection.close()
-
-        # Validate password after account checks
         if len(password) < 8:
             return render_template(
                 "register.html",
@@ -1212,32 +765,76 @@ def register():
                 email=email
             )
 
-        password_hash = generate_password_hash(password)
-
         connection = get_db_connection()
 
-        # Create the new account
-        connection.execute(
-            """
-            INSERT INTO users (username, email, password_hash, currency)
-            VALUES (?, ?, ?, ?)
-            """,
-            (username, email, password_hash, currency)
-        )
+        try:
+            existing_username = connection.execute(
+                "SELECT id FROM users WHERE username = ?",
+                (username,)
+            ).fetchone()
 
-        # Only remove the deleted_users record AFTER
-        # the new account has been successfully inserted.
-        if deleted_user:
+            if existing_username:
+                return render_template(
+                    "register.html",
+                    error="Username already exists.",
+                    username=username,
+                    email=email
+                )
+
+            existing_email = connection.execute(
+                "SELECT id FROM users WHERE email = ?",
+                (email,)
+            ).fetchone()
+
+            if existing_email:
+                return render_template(
+                    "register.html",
+                    error="Email already exists.",
+                    username=username,
+                    email=email
+                )
+
+            password_hash = generate_password_hash(password)
+
             connection.execute(
                 """
-                DELETE FROM deleted_users
-                WHERE email = ?
+                INSERT INTO users (username, email, password_hash, currency)
+                VALUES (?, ?, ?, ?)
                 """,
-                (email,)
+                (username, email, password_hash, currency)
             )
 
-        connection.commit()
-        connection.close()
+            # Mark the most recent deletion record for this email
+            # as recreated, without removing any history.
+            deleted_record = connection.execute(
+                """
+                SELECT id
+                FROM deleted_users
+                WHERE email = ? AND recreated = 0
+                ORDER BY deleted_at DESC, id DESC
+                LIMIT 1
+                """,
+                (email,)
+            ).fetchone()
+
+            if deleted_record:
+                connection.execute(
+                    """
+                    UPDATE deleted_users
+                    SET recreated = 1, recreated_at = ?
+                    WHERE id = ?
+                    """,
+                    (datetime.now().isoformat(), deleted_record["id"])
+                )
+
+            connection.commit()
+
+        except Exception:
+            connection.rollback()
+            raise
+
+        finally:
+            connection.close()
 
         return redirect(url_for("login"))
 

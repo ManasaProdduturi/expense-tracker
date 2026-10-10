@@ -1,154 +1,700 @@
+
+/* ========================================
+   GLOBAL STYLES
+======================================== */
+
 body {
     font-family: Arial, sans-serif;
+    background-color: #ffffff;
+    color: #000000;
+    transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-.amount-filter {
-    height: 38px;
-    width: 100px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    padding: 0 10px;
-    border: 1px solid #adb5bd;
-    border-radius: 6px;
-    background: white;
+
+/* ========================================
+   SHARED NAVBAR
+======================================== */
+
+.top-navbar {
+    background-color: #ffffff;
+    color: #000000;
+    border-bottom: 1px solid #e9ecef;
 }
+
+.top-navbar .navbar-brand {
+    color: #000000 !important;
+    font-weight: 600;
+}
+
+.menu-button {
+    background: transparent;
+    border: none;
+    color: #000000 !important;
+    font-size: 28px;
+    line-height: 1;
+    padding: 4px 8px;
+    cursor: pointer;
+}
+
+.top-navbar .dropdown-menu {
+    min-width: 210px;
+    background-color: #ffffff;
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.top-navbar .dropdown-item {
+    color: #000000;
+}
+
+.top-navbar .dropdown-item:hover,
+.top-navbar .dropdown-item:focus {
+    background-color: #f1f3f5;
+    color: #000000;
+}
+
+
+/* ========================================
+   GENERAL COMPONENTS
+======================================== */
+
+.card,
+.modal-content {
+    background-color: #ffffff;
+    color: #000000;
+}
+
+.form-label {
+    color: inherit;
+    font-weight: 500;
+}
+
+.form-control,
+.form-select {
+    background-color: #ffffff;
+    color: #000000;
+    border-color: #ced4da;
+}
+
+.form-control::placeholder {
+    color: #6c757d;
+}
+
+.table {
+    --bs-table-color: #000000;
+    --bs-table-bg: #ffffff;
+    --bs-table-border-color: #dee2e6;
+}
+
+
+/* ========================================
+   AMOUNT FILTER
+======================================== */
 
 .amount-filter span {
-    color: #6c757d;
-    font-size: 14px;
-}
-
-.amount-filter input {
-    width: 100%;
-    border: none;
-    outline: none;
-    background: transparent;
-    font-size: 14px;
-}
-
-.amount-filter input::placeholder {
-    color: #6c757d;
-}
-
-.app-footer {
-    background-color: #f1f3f5;
-    color: #495057;
-    border-top: 1px solid #dee2e6;
-}
-
-.date-filter {
-    position: relative;
-    height: 38px;
-    min-width: 82px;
-    padding: 0 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-    border: 1px solid #adb5bd;
-    border-radius: 6px;
-    background: white;
-    color: #495057;
-    font-size: 14px;
-    cursor: pointer;
     white-space: nowrap;
 }
 
+.amount-filter input {
+    min-width: 0;
+}
+
+.amount-filter input::placeholder {
+    opacity: 0.7;
+}
+
+
+/* ========================================
+   DATE FILTER
+======================================== */
+
 .date-filter input {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    opacity: 0;
-    cursor: pointer;
-}
-
-body.dark-mode {
-    background-color: #181a1b;
-    color: #f1f1f1;
-}
-
-.dark-mode .card,
-.dark-mode .dropdown-menu,
-.dark-mode .modal-content {
-    background-color: #242729;
-    color: #f1f1f1;
-}
-
-.dark-mode .form-control,
-.dark-mode .form-select {
-    background-color: #303438;
-    color: #f1f1f1;
-    border-color: #555;
-}
-
-.dark-mode .text-muted {
-    color: #b8bec4 !important;
-}
-
-.dark-mode .table {
-    --bs-table-color: #f1f1f1;
-    --bs-table-bg: #242729;
-    --bs-table-border-color: #555;
+    min-width: 0;
 }
 
 
-/* Shared page footer */
+/* ========================================
+   FOOTER
+======================================== */
+
 .app-footer {
-    background-color: #f1f3f5;
-    color: #495057;
+    background-color: #ffffff;
+    color: #000000;
     border-top: 1px solid #dee2e6;
 }
 
-/* Login page */
+
+/* ========================================
+   LOGIN PAGE
+======================================== */
+
+.login-page {
+    min-height: 70vh;
+}
+
 .login-card {
-    max-width: 520px;
+    max-width: 450px;
     margin: 0 auto;
     border: none;
-    border-radius: 16px;
+    border-radius: 12px;
 }
 
 .login-button {
     width: 100%;
 }
 
-/* Dark theme */
+
+/* ========================================
+   DARK MODE — PAGE
+======================================== */
+
 body.dark-mode {
-    background-color: #181a1b;
-    color: #f1f1f1;
+    background-color: #000000;
+    color: #ffffff;
 }
 
+
+/* Navbar */
+
+.dark-mode .top-navbar {
+    background-color: #000000;
+    color: #ffffff;
+    border-bottom-color: #333333;
+}
+
+.dark-mode .top-navbar .navbar-brand {
+    color: #ffffff !important;
+}
+
+/* Hamburger icon */
+.dark-mode .top-navbar .menu-button {
+    color: #ffffff !important;
+}
+
+
+/* Dropdown menus */
+
+.dark-mode .top-navbar .dropdown-menu {
+    background-color: #000000;
+    border-color: #333333;
+}
+
+.dark-mode .top-navbar .dropdown-item {
+    background-color: #000000;
+    color: #ffffff;
+}
+
+.dark-mode .top-navbar .dropdown-item:hover,
+.dark-mode .top-navbar .dropdown-item:focus {
+    background-color: #222222;
+    color: #ffffff;
+}
+
+.dark-mode .dropdown-divider {
+    border-top-color: #444444;
+}
+
+
+/* Cards and modals */
+
 .dark-mode .card,
-.dark-mode .dropdown-menu,
 .dark-mode .modal-content {
-    background-color: #242729;
-    color: #f1f1f1;
+    background-color: #000000;
+    color: #ffffff;
+    border-color: #333333;
+}
+
+.dark-mode .card-header,
+.dark-mode .card-footer,
+.dark-mode .modal-header,
+.dark-mode .modal-footer {
+    background-color: #000000;
+    color: #ffffff;
+    border-color: #333333;
+}
+
+
+/* Forms */
+
+.dark-mode .form-label,
+.dark-mode .form-check-label {
+    color: #ffffff;
 }
 
 .dark-mode .form-control,
 .dark-mode .form-select {
-    background-color: #303438;
-    color: #f1f1f1;
-    border-color: #555;
+    background-color: #111111;
+    color: #ffffff;
+    border-color: #555555;
 }
 
 .dark-mode .form-control::placeholder {
-    color: #b8bec4;
+    color: #bbbbbb;
+}
+
+.dark-mode .form-control:focus,
+.dark-mode .form-select:focus {
+    background-color: #111111;
+    color: #ffffff;
+    border-color: #86b7fe;
+}
+
+.dark-mode .form-select option {
+    background-color: #000000;
+    color: #ffffff;
+}
+
+
+/* Tables */
+
+.dark-mode .table {
+    --bs-table-color: #ffffff;
+    --bs-table-bg: #000000;
+    --bs-table-border-color: #444444;
+    --bs-table-striped-color: #ffffff;
+    --bs-table-striped-bg: #111111;
+    --bs-table-hover-color: #ffffff;
+    --bs-table-hover-bg: #222222;
+}
+
+.dark-mode .table th,
+.dark-mode .table td {
+    color: #ffffff;
+}
+
+
+/* Text */
+
+.dark-mode .text-dark {
+    color: #ffffff !important;
 }
 
 .dark-mode .text-muted {
-    color: #b8bec4 !important;
+    color: #bbbbbb !important;
 }
 
-.dark-mode .table {
-    --bs-table-color: #f1f1f1;
-    --bs-table-bg: #242729;
-    --bs-table-border-color: #555;
+.dark-mode .text-body {
+    color: #ffffff !important;
 }
+
+.dark-mode a:not(.btn):not(.dropdown-item) {
+    color: #9ecbff;
+}
+
+
+/* Footer */
 
 .dark-mode .app-footer {
-    background-color: #242729;
-    color: #f1f1f1;
-    border-top-color: #444;
+    background-color: #000000;
+    color: #ffffff;
+    border-top-color: #333333;
+}
+
+
+/* Alerts and close buttons */
+
+.dark-mode .btn-close {
+    filter: invert(1);
+}
+
+.dark-mode .list-group-item {
+    background-color: #000000;
+    color: #ffffff;
+    border-color: #333333;
+}
+
+
+/* Preserve readable Bootstrap button text */
+
+.dark-mode .btn-primary,
+.dark-mode .btn-success,
+.dark-mode .btn-danger,
+.dark-mode .btn-warning,
+.dark-mode .btn-info {
+    color: #ffffff;
+}
+
+
+/* Selection */
+
+.dark-mode ::selection {
+    background-color: #555555;
+    color: #ffffff;
+}
+
+
+/* ========================================
+   HOME PAGE
+======================================== */
+
+
+.home-card {
+    max-width: 700px;
+    margin: 0 auto;
+    border: 1px solid #dee2e6;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+
+.page-title {
+    font-weight: 600;
+}
+
+.nav-card {
+    border: none;
+    border-radius: 10px;
+    transition: transform 0.15s ease;
+}
+
+.nav-card:hover {
+    transform: translateY(-2px);
+}
+
+/* Home page dark mode */
+
+
+.dark-mode .home-card {
+    border-color: #444444;
+    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.05);
+}
+
+.dark-mode .home-card,
+.dark-mode .nav-card {
+    background-color: #000000;
+    color: #ffffff;
+}
+
+.dark-mode .home-card .text-dark,
+.dark-mode .nav-card .text-dark {
+    color: #ffffff !important;
+}
+
+
+/* REGISTER PAGE */
+.register-page {
+    min-height: 70vh;
+}
+
+.register-card {
+    max-width: 450px;
+    margin: 0 auto;
+    border: none;
+    border-radius: 12px;
+}
+
+.register-button {
+    width: 100%;
+}
+
+
+/* forgot pwd*/
+
+.forgot-password-page {
+    min-height: 70vh;
+}
+
+.forgot-card {
+    max-width: 450px;
+    margin: 0 auto;
+    border: none;
+    border-radius: 12px;
+}
+
+.submit-button {
+    width: 100%;
+}
+
+/*verify otp*/
+
+.verify-otp-page {
+    min-height: 70vh;
+}
+
+.otp-card {
+    max-width: 450px;
+    margin: 0 auto;
+    border: none;
+    border-radius: 12px;
+}
+
+.verify-button {
+    width: 100%;
+}
+
+.otp-input {
+    text-align: center;
+    font-size: 24px;
+    letter-spacing: 8px;
+}
+
+
+/* Reset password page */
+.reset-password-page {
+    min-height: 70vh;
+}
+
+.reset-card {
+    max-width: 450px;
+    margin: 0 auto;
+    border: none;
+    border-radius: 12px;
+}
+
+.password-group {
+    position: relative;
+}
+
+.password-group input {
+    padding-right: 45px;
+}
+
+.password-toggle {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 18px;
+}
+
+.reset-button {
+    width: 100%;
+}
+
+
+/* Categories page */
+.categories-card {
+    max-width: 600px;
+    margin: 0 auto;
+    border: none;
+    border-radius: 12px;
+}
+
+.category-item {
+    padding: 12px 16px;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    background-color: #ffffff;
+}
+
+.category-number {
+    font-weight: 600;
+    color: #6c757d;
+    min-width: 30px;
+    display: inline-block;
+}
+
+/* Categories page dark mode */
+.dark-mode .category-item {
+    background-color: #000000;
+    color: #ffffff;
+    border-color: #444444;
+}
+
+.dark-mode .category-number {
+    color: #bbbbbb;
+}
+
+
+/* ========================================
+   EXPENSES PAGE
+======================================== */
+
+.search-bar {
+    height: 38px;
+    border: 1px solid #adb5bd;
+    border-radius: 20px;
+    background-color: #ffffff;
+    padding: 0 12px;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    max-width: 420px;
+}
+
+.search-bar input {
+    border: none;
+    outline: none;
+    width: 100%;
+    min-width: 0;
+    font-size: 14px;
+    background: transparent;
+    color: inherit;
+}
+
+.search-clear {
+    border: none;
+    background: none;
+    color: #6c757d;
+    font-size: 18px;
+    padding: 0;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.filter-select,
+.amount-filter {
+    height: 38px;
+    border: 1px solid #adb5bd;
+    border-radius: 6px;
+    background-color: #ffffff;
+    color: #495057;
+    font-size: 14px;
+}
+
+.filter-select {
+    padding: 0 30px 0 10px;
+}
+
+.amount-filter {
+    width: 95px;
+    padding: 0 10px;
+}
+
+.amount-filter::placeholder {
+    color: #6c757d;
+}
+
+.date-filter {
+    height: 38px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    border: 1px solid #adb5bd;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #495057;
+    font-size: 14px;
+    padding: 0 8px;
+    white-space: nowrap;
+}
+
+.date-filter input {
+    height: 28px;
+    min-width: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: #495057;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.date-filter input::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+}
+
+.filter-button {
+    height: 38px;
+}
+
+.expense-card {
+    border: none;
+    border-radius: 12px;
+}
+
+.table th {
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.action-button {
+    border: none;
+    background: none;
+    padding: 4px 6px;
+    font-size: 18px;
+    text-decoration: none;
+}
+
+.empty-state {
+    padding: 50px 20px;
+}
+
+/* Expenses page dark mode */
+.dark-mode .search-bar,
+.dark-mode .filter-select,
+.dark-mode .amount-filter,
+.dark-mode .date-filter {
+    background-color: #111111;
+    color: #ffffff;
+    border-color: #555555;
+}
+
+.dark-mode .search-bar input,
+.dark-mode .date-filter input {
+    color: #ffffff;
+}
+
+.dark-mode .date-filter input::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+}
+
+.dark-mode .table-light {
+    --bs-table-color: #ffffff;
+    --bs-table-bg: #111111;
+    --bs-table-border-color: #444444;
+}
+
+/* Responsive filters */
+@media (max-width: 576px) {
+    .search-bar {
+        max-width: 100%;
+    }
+
+    .filter-bar > * {
+        flex: 1 1 auto;
+    }
+
+    .amount-filter {
+        width: 100%;
+    }
+
+    .date-filter {
+        min-width: 100%;
+        justify-content: space-between;
+    }
+
+    .date-filter input {
+        flex: 1;
+    }
+}
+
+
+/* Dashboard */
+.dashboard-page .stat-card,
+.dashboard-page .chart-card,
+.dashboard-page .recent-card {
+    border: none;
+    border-radius: 12px;
+}
+
+.dashboard-page .stat-value {
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.dashboard-page .chart-container {
+    position: relative;
+    height: 320px;
+}
+
+.dashboard-page .expense-row {
+    padding: 12px 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.dashboard-page .expense-row:last-child {
+    border-bottom: none;
 }

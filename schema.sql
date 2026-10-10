@@ -63,5 +63,8 @@ CREATE TABLE IF NOT EXISTS deleted_users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT NOT NULL,
     email TEXT NOT NULL,
-    deleted_at TEXT NOT NULL
+    deleted_at TEXT NOT NULL,
+    recreated INTEGER NOT NULL DEFAULT 0
+        CHECK (recreated IN (0, 1)),
+    recreated_at TEXT
 );
