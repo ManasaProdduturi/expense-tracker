@@ -30,7 +30,18 @@ Expense Tracker is a web application for recording, managing, searching, and ana
 
 ## Screenshots
 
-Screenshots of the application's interface will be added here.
+### Dashboard
+![Expense Tracker Dashboard](Dashboard.png)
+
+### Expenses
+![Expenses List](Expenses.png)
+
+### Add Expense
+![Add Expense Form](Add_expense.png)
+
+### User Profile
+![User Profile](Profile.png)
+
 
 ## Setup and Installation
 
