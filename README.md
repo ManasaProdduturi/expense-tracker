@@ -42,8 +42,8 @@ Screenshots of the application's interface will be added here.
 ### 1. Clone the repository
 
 ```bash
-git clone <repository-url>
-cd <cproject-folder>
+git clone https://github.com/ManasaProdduturi/expense-tracker
+cd expense-tracker
 ```
 
 Alternatively, download the repository files.
