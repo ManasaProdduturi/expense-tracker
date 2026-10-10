@@ -115,3 +115,5 @@ The main project files and directories include:
 ## Project Background
 
 I built Expense Tracker as my final project for Harvard University's CS50x course to apply the programming concepts and skills I learned throughout the course. I wanted to create a practical application that solves a real-world problem while challenging myself to work with Python, Flask, SQL, and web development. This project gave me an opportunity to bring together what I learned and gain hands-on experience building a complete application.
+
+### Feel free to leave the feedback!
