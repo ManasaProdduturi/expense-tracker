@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, session, redirect, url_for, jsonify, flash
 from datetime import date, datetime, timedelta
 import os
-from database import get_db_connection
+from database import get_db_connection, initialize_database
 from werkzeug.security import generate_password_hash, check_password_hash
 import re
 import secrets
@@ -13,8 +13,11 @@ import math
 
 load_dotenv()
 
+
 app = Flask(__name__)
 app.secret_key = os.environ["SECRET_KEY"]
+
+initialize_database()
 
 CURRENCY_SYMBOLS = {
     "INR": "₹",
