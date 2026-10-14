@@ -9,6 +9,8 @@ import smtplib
 from email.message import EmailMessage
 from dotenv import load_dotenv
 import math
+from flask import send_from_directory
+from pathlib import Path
 
 
 load_dotenv()
@@ -2612,7 +2614,12 @@ def reset_password():
 
     return render_template("reset_password.html")
 
-
+@app.route("/google4bec94f3a0690fd4.html")
+def google_site_verification():
+    return send_from_directory(
+        Path(__file__).resolve().parent,
+        "google4bec94f3a0690fd4.html"
+    )
 
 
 
