@@ -74,111 +74,343 @@ document.addEventListener("DOMContentLoaded", () => {
     setupPasswordToggle("confirm_password", "toggleConfirmPassword");
 });
 
-// Registration checks and deleted-account confirmation
+
+ // Registration validation
 document.addEventListener("DOMContentLoaded", () => {
-    // Username availability check
+    const form = document.getElementById("registerForm");
+    if (!form) return;
+
     const username = document.getElementById("username");
-    const usernameStatus = document.getElementById("usernameStatus");
-    let usernameTimer;
-
-    if (username && usernameStatus) {
-        username.addEventListener("input", function () {
-            this.value = this.value.replace(/[^A-Za-z0-9_]/g, "");
-
-            clearTimeout(usernameTimer);
-
-            const value = this.value.trim();
-
-            usernameStatus.textContent = "";
-            usernameStatus.className = "form-text";
-
-            if (!value) {
-                return;
-            }
-
-            usernameTimer = setTimeout(() => {
-                fetch(`/check-username?username=${encodeURIComponent(value)}`)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error("Username check failed");
-                        }
-
-                        return response.json();
-                    })
-                    .then(data => {
-                        // Ignore results for an outdated username.
-                        if (username.value.trim() !== value) {
-                            return;
-                        }
-
-                        usernameStatus.textContent = data.message;
-                        usernameStatus.className = data.available
-                            ? "form-text text-success"
-                            : "form-text text-danger";
-                    })
-                    .catch(() => {
-                        usernameStatus.textContent =
-                            "Unable to check username.";
-                        usernameStatus.className = "form-text text-danger";
-                    });
-            }, 300);
-        });
-    }
-
-    // Email availability check
     const email = document.getElementById("email");
+    const password = document.getElementById("password");
+    const confirmPassword = document.getElementById("confirm_password");
+
+    const usernameStatus = document.getElementById("usernameStatus");
     const emailStatus = document.getElementById("emailStatus");
+    const passwordStatus = document.getElementById("passwordStatus");
+    const confirmPasswordStatus =
+        document.getElementById("confirmPasswordStatus");
+
+    let usernameTimer;
     let emailTimer;
+    let usernameRequest = 0;
+    let emailRequest = 0;
 
-    if (email && emailStatus) {
-        email.addEventListener("input", function () {
-            clearTimeout(emailTimer);
+    function showStatus(element, message, valid = false) {
+        if (!element) return;
 
-            const value = this.value.trim().toLowerCase();
-
-            emailStatus.textContent = "";
-            emailStatus.className = "form-text";
-
-            if (!value) {
-                return;
-            }
-
-            if (!email.checkValidity()) {
-                emailStatus.textContent =
-                    "Please enter a valid email address.";
-                emailStatus.className = "form-text text-danger";
-                return;
-            }
-
-            emailTimer = setTimeout(() => {
-                fetch(`/check-email?email=${encodeURIComponent(value)}`)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error("Email check failed");
-                        }
-
-                        return response.json();
-                    })
-                    .then(data => {
-                        // Ignore results for an outdated email.
-                        if (email.value.trim().toLowerCase() !== value) {
-                            return;
-                        }
-
-                        emailStatus.textContent = data.message;
-                        emailStatus.className = data.available
-                            ? "form-text text-success"
-                            : "form-text text-danger";
-                    })
-                    .catch(() => {
-                        emailStatus.textContent =
-                            "Unable to check email.";
-                        emailStatus.className = "form-text text-danger";
-                    });
-            }, 300);
-        });
+        element.textContent = message;
+        element.className = valid
+            ? "form-text text-success"
+            : message
+                ? "form-text text-danger"
+                : "form-text";
     }
 
+    function checkUsernameFormat() {
+        const value = username.value.trim();
+
+        if (!value) {
+            showStatus(usernameStatus, "Username is required.");
+            return false;
+        }
+
+        if (!/^[A-Za-z0-9_]{3,30}$/.test(value)) {
+            showStatus(
+                usernameStatus,
+                "Use 3–30 characters: letters, numbers, and underscores only."
+            );
+            return false;
+        }
+
+        return true;
+    }
+
+    function checkEmailFormat() {
+        const value = email.value.trim();
+
+        if (!value) {
+            showStatus(emailStatus, "Email address is required.");
+            return false;
+        }
+
+        if (!email.validity.valid) {
+            showStatus(emailStatus, "Please enter a valid email address.");
+            return false;
+        }
+
+        return true;
+    }
+
+    function checkPassword() {
+        if (!password.value) {
+            showStatus(passwordStatus, "Password is required.");
+            return false;
+        }
+
+        if (password.value.length < 8) {
+            showStatus(
+                passwordStatus,
+                "Password must be at least 8 characters long."
+            );
+            return false;
+        }
+
+        if (password.value.length > 128) {
+            showStatus(
+                passwordStatus,
+                "Password must not exceed 128 characters."
+            );
+            return false;
+        }
+
+        showStatus(passwordStatus, "Password length is valid.", true);
+        return true;
+    }
+
+    function checkPasswordMatch() {
+        if (!confirmPassword.value) {
+            showStatus(
+                confirmPasswordStatus,
+                "Please confirm your password."
+            );
+            return false;
+        }
+
+        if (password.value !== confirmPassword.value) {
+            showStatus(confirmPasswordStatus, "Passwords do not match.");
+            return false;
+        }
+
+        showStatus(confirmPasswordStatus, "Passwords match.", true);
+        return true;
+    }
+
+    async function checkAvailability(field, statusElement, endpoint, value, requestId) {
+        try {
+            const response = await fetch(
+                `${endpoint}?${field}=${encodeURIComponent(value)}`
+            );
+
+            if (!response.ok) {
+                throw new Error("Availability check failed.");
+            }
+
+            const data = await response.json();
+
+            const requestIsCurrent =
+                field === "username"
+                    ? requestId === usernameRequest
+                    : requestId === emailRequest;
+
+            if (!requestIsCurrent) return false;
+
+            showStatus(statusElement, data.message, data.available);
+            return Boolean(data.available);
+        } catch {
+            const requestIsCurrent =
+                field === "username"
+                    ? requestId === usernameRequest
+                    : requestId === emailRequest;
+
+            if (requestIsCurrent) {
+                showStatus(
+                    statusElement,
+                    `Unable to check ${field}. Please try again.`
+                );
+            }
+
+            return false;
+        }
+    }
+
+    username.addEventListener("input", () => {
+        clearTimeout(usernameTimer);
+        usernameRequest++;
+
+        if (!checkUsernameFormat()) return;
+
+        const value = username.value.trim();
+        const requestId = usernameRequest;
+        showStatus(usernameStatus, "Checking username…");
+
+        usernameTimer = setTimeout(() => {
+            checkAvailability(
+                "username",
+                usernameStatus,
+                "/check-username",
+                value,
+                requestId
+            );
+        }, 300);
+    });
+
+    email.addEventListener("input", () => {
+        clearTimeout(emailTimer);
+        emailRequest++;
+
+        if (!checkEmailFormat()) return;
+
+        const value = email.value.trim().toLowerCase();
+        const requestId = emailRequest;
+        showStatus(emailStatus, "Checking email…");
+
+        emailTimer = setTimeout(() => {
+            checkAvailability(
+                "email",
+                emailStatus,
+                "/check-email",
+                value,
+                requestId
+            );
+        }, 300);
+    });
+
+    password.addEventListener("input", () => {
+        checkPassword();
+        if (confirmPassword.value) checkPasswordMatch();
+    });
+
+    confirmPassword.addEventListener("input", checkPasswordMatch);
+
+    // Validate all fields and wait for availability checks before submission.
+form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    clearTimeout(usernameTimer);
+    clearTimeout(emailTimer);
+
+    const errors = [];
+
+    const usernameValid = checkUsernameFormat();
+    const emailValid = checkEmailFormat();
+    const passwordValid = checkPassword();
+    const confirmationValid = checkPasswordMatch();
+
+    if (!usernameValid) {
+        errors.push(usernameStatus.textContent);
+    }
+
+    if (!emailValid) {
+        errors.push(emailStatus.textContent);
+    }
+
+    if (!passwordValid) {
+        errors.push(passwordStatus.textContent);
+    }
+
+    if (!confirmationValid) {
+        errors.push(confirmPasswordStatus.textContent);
+    }
+
+    let usernameAvailable = false;
+    let emailAvailable = false;
+    const checks = [];
+
+    if (usernameValid) {
+        const requestId = ++usernameRequest;
+        showStatus(usernameStatus, "Checking username…");
+
+        checks.push(
+            checkAvailability(
+                "username",
+                usernameStatus,
+                "/check-username",
+                username.value.trim(),
+                requestId
+            ).then((available) => {
+                usernameAvailable = available;
+            })
+        );
+    } else {
+        usernameRequest++;
+    }
+
+    if (emailValid) {
+        const requestId = ++emailRequest;
+        showStatus(emailStatus, "Checking email…");
+
+        checks.push(
+            checkAvailability(
+                "email",
+                emailStatus,
+                "/check-email",
+                email.value.trim().toLowerCase(),
+                requestId
+            ).then((available) => {
+                emailAvailable = available;
+            })
+        );
+    } else {
+        emailRequest++;
+    }
+
+    await Promise.all(checks);
+
+    if (usernameValid && !usernameAvailable) {
+        errors.push(usernameStatus.textContent || "Username is unavailable.");
+    }
+
+    if (emailValid && !emailAvailable) {
+        errors.push(emailStatus.textContent || "Email is unavailable.");
+    }
+
+    if (errors.length > 0) {
+        let alertBox = form.parentElement.querySelector(
+            "#registrationValidationAlert"
+        );
+
+        if (!alertBox) {
+            alertBox = document.createElement("div");
+            alertBox.id = "registrationValidationAlert";
+            alertBox.className = "alert alert-danger";
+            alertBox.setAttribute("role", "alert");
+            form.parentElement.insertBefore(alertBox, form);
+        }
+
+        alertBox.replaceChildren();
+
+        const heading = document.createElement("strong");
+        heading.textContent = "Please fix the following errors:";
+        alertBox.appendChild(heading);
+
+        const list = document.createElement("ul");
+        list.className = "mb-0 mt-2";
+
+        [...new Set(errors.filter(Boolean))].forEach((message) => {
+            const item = document.createElement("li");
+            item.textContent = message;
+            list.appendChild(item);
+        });
+
+        alertBox.appendChild(list);
+
+        clearTimeout(alertBox.dismissTimer);
+
+        alertBox.dismissTimer = setTimeout(() => {
+            alertBox.remove();
+        }, 10000);
+
+        return;
+    }
+
+    form.submit();
+    });
+});
+
+// Dismiss all Bootstrap alert boxes after 10 seconds.
+document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll(".alert").forEach((alert) => {
+        setTimeout(() => {
+            if (!alert.isConnected) return;
+
+            if (window.bootstrap?.Alert) {
+                window.bootstrap.Alert.getOrCreateInstance(alert).close();
+            } else {
+                alert.remove();
+            }
+        }, 10000);
+    });
 });
 
 
