@@ -120,8 +120,14 @@ The main project files and directories include:
 
 ## Acknowledgements and References
 
-- **Official documentation:** Documentation consulted during development for Python, Flask, SQLite, Werkzeug, Bootstrap, Jinja, and Chart.js.
-- **ChatGPT** — used for development guidance, troubleshooting, and understanding implementation concepts.
+- [Python Documentation](https://docs.python.org/3/)
+- [Flask Documentation](https://flask.palletsprojects.com/)
+- [SQLite Documentation](https://www.sqlite.org/docs.html)
+- [Werkzeug Documentation](https://werkzeug.palletsprojects.com/)
+- [Bootstrap Documentation](https://getbootstrap.com/docs/)
+- [Jinja Documentation](https://jinja.palletsprojects.com/)
+- [Chart.js Documentation](https://www.chartjs.org/docs/latest/)
+- [ChatGPT](chatgpt.com) — used for development guidance, troubleshooting, and understanding implementation concepts.
 
 ## Project Background
 
