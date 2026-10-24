@@ -43,6 +43,11 @@ Expense Tracker is a web application for recording, managing, searching, and ana
 ![User Profile](Profile.png)
 
 
+## Live Demo
+
+Try the deployed application: [Expense Tracker](https://expense-tracker-dffqfghacma7cbce.centralindia-01.azurewebsites.net/)
+
+
 ## Setup and Installation
 
 ### Prerequisites
