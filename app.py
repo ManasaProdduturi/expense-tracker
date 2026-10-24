@@ -1312,6 +1312,7 @@ def change_password():
         (new_password_hash, session["user_id"])
     )
 
+    flash("Password changed successfully.", "success")
 
     connection.commit()
 
