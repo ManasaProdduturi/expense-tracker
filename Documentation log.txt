@@ -1,0 +1,274 @@
+EXPENSE TRACKER — DEVELOPMENT LOG
+CS50x Final Project
+
+Purpose of this document
+This file records the development journey behind Expense Tracker: the work completed, decisions made, mistakes encountered, problems investigated, and lessons learned. It complements the main Project Documentation, which describes the application and its implementation in a more formal, structured way.
+
+Note on dates: This log is reconstructed from my development notes and ChatGPT project conversations. Dates are included where they were recorded; other entries follow the development sequence, and their exact dates were not always preserved.
+
+======================================================================
+1. PROJECT IDEA AND SCOPE
+======================================================================
+
+I chose to build Expense Tracker, with the tagline “Where did my money go?”, as my CS50x final project. I wanted a practical application that would let users record expenses, organize them, find past transactions, and understand their spending.
+
+I decided to keep the project focused on expense tracking. The planned features were:
+- Registration, login, and logout.
+- Adding, viewing, editing, and deleting expenses.
+- Twelve predefined expense categories.
+- Searching and filtering expenses.
+- A dashboard with spending summaries and charts.
+- User-specific expense data.
+- Validation and security protections.
+- Account settings, password changes, password reset, and account deletion.
+
+I deliberately kept investments, bank-account integration, bill payments, a complex budgeting system, and social features outside the scope. This helped keep the project manageable for CS50x instead of turning it into a much larger personal-finance platform.
+
+Decision: I agreed to follow a phase-by-phase roadmap and keep the feature scope stable unless I explicitly chose to change it. The roadmap covered planning, setup, authentication, database work, CRUD, categories, filtering, dashboard analytics, UI/UX, security, testing, and final submission.
+
+======================================================================
+2. INITIAL PROJECT SETUP
+======================================================================
+
+I created the project in C:\Projects\Expense-Tracker and set up a Python virtual environment.
+
+Commands used:
+    python -m venv venv
+    venv\Scripts\activate
+
+Problem: PowerShell blocked activation of the virtual environment because script execution was disabled. The terminal displayed a PowerShell execution-policy error.
+
+Solution: I used a process-scoped execution-policy bypass and activated the environment again:
+    Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+    venv\Scripts\activate
+
+This allowed me to activate the environment for the current PowerShell session without changing the policy permanently for the whole machine.
+
+I installed Flask, created the initial folders and files (including app.py, templates, static/css, static/js, README.md, and requirements.txt), and pinned Flask in requirements.txt. I started with a tiny Flask route that returned “Expense Tracker is running!” and opened it in the browser to confirm that the basic application worked.
+
+Decision: I chose Python, Flask, SQLite, SQL, HTML, CSS, JavaScript, Bootstrap, and Jinja. I kept the structure straightforward rather than introducing an additional frontend framework or database system.
+
+======================================================================
+3. DATABASE DESIGN AND SETUP
+======================================================================
+
+I separated database structure from application code:
+- schema.sql defines the database tables and predefined category data.
+- database.py creates/initializes the database and provides a reusable get_db_connection() function.
+- SQLite is used to store users, categories, and expenses.
+
+I used CREATE TABLE IF NOT EXISTS and INSERT OR IGNORE so database initialization could be repeated without recreating existing tables or inserting duplicate predefined categories. SQLite rows were configured for access by column name.
+
+The database connects each expense to its owner through user_id and to a predefined category through category_id. I chose to retrieve category names with SQL JOINs instead of duplicating category text in every expense record.
+
+Decision: I wanted database setup to be repeatable and automated rather than relying on manually creating tables or inserting categories each time.
+
+======================================================================
+4. REGISTRATION, LOGIN, SESSIONS, AND PROTECTED PAGES
+======================================================================
+
+I implemented registration and login, password hashing, logout, and protected routes.
+
+Important implementation decisions:
+- Passwords are hashed with Werkzeug's generate_password_hash() and checked with check_password_hash(); plaintext passwords are not stored.
+- Flask sessions identify the logged-in user, with the user's database ID stored in session["user_id"].
+- session.clear() is used at logout.
+- A reusable login_required() check protects authenticated pages.
+- Duplicate usernames and email addresses are handled rather than allowing a database uniqueness error to crash the application.
+
+I temporarily created a profile/test route to confirm that the session retained the logged-in user's ID, then removed the test route after verification.
+
+Decision about login errors: The login route displays the same generic message, “Invalid username/email or password,” when the account is not found or the password is incorrect. This is intentional: separate messages could reveal whether an email address is registered. The trade-off is that the message is less specific, so users need to check both fields. Registration and password-reset flows provide separate paths for new and existing users.
+
+======================================================================
+5. EXPENSE CREATION, VIEWING, EDITING, AND DELETION
+======================================================================
+
+I completed the expense CRUD workflow:
+- Create: add an expense.
+- Read: view the user's expense list.
+- Update: edit an existing expense.
+- Delete: remove an expense after confirmation.
+
+Each expense contains an amount, date, category, and optional description. Parameterized SQL queries are used for database operations involving user input.
+
+A key security decision was to filter expense queries by the current user's ID. Edit and delete operations check both the expense ID and user ID, so changing an ID in the URL should not grant access to another user's expense.
+
+I chose to redirect users back to the expense list after adding, editing, or deleting an expense so they can immediately see the result.
+
+Delete confirmation: I added JavaScript confirm() before deletion. It works, but it is a basic browser dialog. I recorded the possibility of replacing it with a styled confirmation modal as a future UI/UX improvement; I did not treat that enhancement as necessary for the core CRUD functionality.
+
+Problem: While implementing server-side validation against future expense dates, I used a variable named date for the submitted form value. This shadowed the imported date class and caused an UnboundLocalError when the code called date.today().
+
+Solution: I renamed the form variable to expense_date, leaving date available as the imported class. I kept both browser-side date limits and server-side validation because browser validation alone can be bypassed.
+
+======================================================================
+6. PREDEFINED CATEGORIES
+======================================================================
+
+I added twelve predefined categories: Food, Transport, Shopping, Housing, Bills & Utilities, Entertainment, Health, Education, Travel, Subscriptions, Personal, and Other.
+
+The categories are stored in the database, used in the Add/Edit Expense forms and filters, and displayed on a protected Categories page. I kept custom user-created categories outside the agreed scope to avoid unnecessary complexity.
+
+======================================================================
+7. SEARCH AND FILTERING
+======================================================================
+
+I added description search and filters for category, date range, minimum amount, and maximum amount. Users can combine filters, and the selected values remain visible after submitting the form. A Clear Filters link returns to /expenses and restores the complete list.
+
+The description search uses SQL LIKE with a wildcard pattern so partial matches can be found. The queries remain limited to the logged-in user's expenses.
+
+I tested searches with matching and nonexistent text, category filtering, individual date boundaries, date ranges, amount boundaries, combined filters, and clearing filters.
+
+UI/UX decision: I deferred a dedicated X button for clearing the search field until the UI/UX phase rather than adding it while implementing the core search logic. The existing Clear Filters link provides the functionality in the meantime.
+
+======================================================================
+8. DASHBOARD AND ANALYTICS
+======================================================================
+
+I built a dashboard with total spending, expense count, and average spending, plus Chart.js visualizations for category-wise spending and spending over time. The dashboard supports All Time, Current Month, Previous Month, and Current Year periods.
+
+I made the dashboard calculations user-specific and based on the logged-in user's expenses. This feature turns the stored expense records into a useful overview instead of displaying only a transaction list.
+
+======================================================================
+9. UI/UX AND VALIDATION IMPROVEMENTS
+======================================================================
+
+I improved the application with a responsive Bootstrap layout, a shared footer, dedicated pages for the dashboard, expenses, forms, and account/profile settings, and password show/hide controls.
+
+Registration includes live username and email availability checks. I specifically preferred validation feedback while the user types rather than relying on an alert popup. When reviewing registration validation, I compared the field-level messages with an additional alert and chose the inline, field-level approach because it was clearer for the experience I wanted.
+
+I added validation for expense inputs and search filters, including positive amounts, valid dates, category selections, date ranges, and amount ranges. Important rules are checked on the server as well as in the browser where appropriate.
+
+For account deletion, I added email OTP verification and a final confirmation step. Password reset also uses an email OTP and requires a new password of at least eight characters with matching confirmation.
+
+======================================================================
+10. PASSWORD RESET AND EMAIL CONFIGURATION
+======================================================================
+
+I implemented a password-reset flow using a six-digit one-time password (OTP). The OTP is hashed before it is stored and expires after ten minutes. The reset process verifies the OTP before allowing a new password to be set.
+
+Development issue: The email verification flow exposed a missing reset route/template during implementation. I added the required reset-password route and template, included password hashing and validation, and tested the flow end to end.
+
+Later, after deployment to Azure, the Forgot Password page displayed “Unable to send OTP. Please try again later.” I checked Azure App Service Log stream instead of assuming the user-facing message identified the cause.
+
+The log showed:
+    OTP EMAIL ERROR: please run connect() first
+
+I reviewed the send_otp_email() function and then checked the Azure application settings. The application reads SMTP_HOST, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, and EMAIL_FROM from environment variables. The required email settings had not been configured in Azure, even though they existed in my local environment.
+
+Solution: I added the individual email settings to Azure App Service environment variables using the values from my local .env configuration. I kept the local .env file separate and did not need to copy the entire file into Azure. I also kept the Azure SECRET_KEY separate from the local SECRET_KEY; the deployed application can use its own key, and changing it unnecessarily could invalidate existing sessions.
+
+Lesson: Local environment variables do not automatically become Azure application settings. A feature can work locally but fail after deployment if the hosted environment is missing configuration. Logs are more useful for diagnosing the underlying cause than a generic message shown to users.
+
+Secret-handling decision: Credentials and secret values belong in environment variables, not in source code or a public GitHub repository. The .env file and local database file are excluded through .gitignore.
+
+======================================================================
+11. ACCOUNT SETTINGS AND USER FEEDBACK
+======================================================================
+
+I added account settings for changing the preferred currency and password. Currency updates use Flask flash messages to confirm success. I also added a success message for password changes using the same pattern: “Password changed successfully.”
+
+I reviewed how users receive feedback after submitting forms and aimed to keep success and validation messages consistent across the application. I treated account settings and account deletion as sensitive actions and added verification steps where needed.
+
+======================================================================
+12. GIT, GITHUB, AND DEPLOYMENT
+======================================================================
+
+I used Git for version control and published the project to a public GitHub repository. I added a README with the project overview, features, technology stack, setup information, security notes, and screenshots. The repository also includes a .gitignore to keep the virtual environment, cache files, local database, .env, and secrets out of version control.
+
+I deployed the application to Microsoft Azure App Service. After deployment, I tested the hosted application and used Azure Log stream to investigate the OTP email configuration issue described above.
+
+Deployment and browser issue: Chrome displayed a dangerous-site warning when I opened the hosted website. I reviewed the warning and continued testing, but I did not treat the warning itself as proof that the application code was broken. A deployed project should be checked for security/reputation warnings and the underlying cause should be investigated rather than ignored.
+
+I also learned that the Azure region does not by itself prevent people in other countries from accessing the website. A single deployment region can affect latency, but it does not restrict access to users in that region unless the application or hosting configuration imposes such restrictions.
+
+======================================================================
+13. TESTING AND REVIEW
+======================================================================
+
+I reviewed the application from the beginning after most features were complete. Testing included the main workflows and invalid inputs, with checks for:
+- Registration, login, and logout.
+- Password hashing and duplicate-account handling.
+- Adding, viewing, editing, and deleting expenses.
+- Expense ownership checks.
+- Prevention of future expense dates.
+- Category display and category selection.
+- Description search and individual/combined filters.
+- Dashboard totals, period filters, and charts.
+- Account settings and password changes.
+- Password reset and email OTP verification.
+- Account deletion confirmation and verification.
+- The deployed website and its environment configuration.
+
+I prepared test data and considered invalid registration and login cases as part of the review. I also checked that the login error remains generic for security, while other flows can provide a more specific message where appropriate—for example, Forgot Password can say that no account is registered with the submitted email.
+
+Testing note: Manual checks are useful, but they do not prove that every possible edge case is covered. The final review should focus on the complete user journeys, validation boundaries, user-data separation, and the deployed version—not just whether each page opens.
+
+======================================================================
+14. SCREEN RECORDING AND CS50x SUBMISSION PREPARATION
+======================================================================
+
+I prepared a screen-only demonstration for the CS50x final project. I decided not to use a face-camera recording or voice-over. The planned demonstration is under three minutes and includes an opening slide with the required project/student details, a demonstration of the main application features, and a closing slide with the technologies used and a thank-you message.
+
+I used Windows + G (Xbox Game Bar) to record the live browser demonstration. During recording, the Add Expense category dropdown was visible on screen but missing from the saved video. This appeared to be a screen-capture issue with the dropdown rendering rather than evidence that the dropdown itself was broken. The next troubleshooting step is to test another recorder, such as Windows Snipping Tool screen recording or OBS Studio, and verify the saved video before finalizing it.
+
+I also considered simple animations for the opening and closing slides and planned to keep the actual website demonstration clear and readable.
+
+======================================================================
+15. IMPORTANT DECISIONS AND WHY I MADE THEM
+======================================================================
+
+1. Keep Expense Tracker focused on recording and understanding expenses instead of adding complex budgeting or other finance features.
+2. Use Flask and SQLite with a small, understandable architecture appropriate for the CS50x project.
+3. Use schema.sql and database.py to make database setup repeatable.
+4. Hash passwords and OTPs rather than storing them as plain text.
+5. Use sessions and user_id-scoped SQL queries to protect user-specific data.
+6. Use parameterized SQL to handle user-provided values safely.
+7. Validate important rules on the server rather than trusting browser controls alone.
+8. Use predefined categories to keep category data consistent and the project scope manageable.
+9. Use a generic login error to avoid revealing whether an account exists, while accepting the usability trade-off.
+10. Keep local development secrets separate from Azure configuration and never publish credentials.
+11. Use Azure logs to diagnose deployment issues instead of guessing based on the generic error shown in the browser.
+12. Defer nonessential polish, such as a custom delete modal and a search-field clear X button, so the core features could be completed first.
+13. Keep the development log separate from the main project documentation and README: the log records the process and lessons, while the other documents explain the finished project to readers.
+
+======================================================================
+16. WHAT I LEARNED
+======================================================================
+
+During this project, I practiced:
+- Setting up a Python virtual environment and resolving a PowerShell execution-policy obstacle.
+- Building routes and templates with Flask and Jinja.
+- Designing relational tables and using SQL joins, parameterized queries, and SQLite foreign keys.
+- Implementing password hashing, sessions, authentication checks, and user-specific data access.
+- Building CRUD workflows and validating input on both the client and server.
+- Combining search and multiple filters while preserving form values.
+- Summarizing data and presenting it with Chart.js.
+- Using Git and GitHub to publish and maintain a project.
+- Deploying a Flask application to Azure App Service.
+- Configuring environment variables in a hosted environment.
+- Reading application logs to diagnose a deployment-only email problem.
+- Balancing security and usability, especially for login error messages.
+- Testing the deployed app and checking whether screen recordings accurately captured the interface.
+
+The most important lesson was that finishing the code is only part of completing a project. Configuration, testing, documentation, deployment, and a clear demonstration also matter.
+
+======================================================================
+17. REMAINING / FINAL CHECKS
+======================================================================
+
+Before considering the CS50x submission complete, verify the latest status of these items:
+- Confirm the public GitHub repository and README accurately describe the finished application.
+- Check that no credentials, .env file, local database, or other private data are committed.
+- Confirm that README screenshots are current and display the final UI.
+- Re-record and review the complete demo if the category dropdown is missing from the captured video.
+- Keep the video within the CS50x time limit and make sure the opening details and feature demonstration are readable.
+- Upload the video and add its URL to the README if required by the submission plan.
+- Complete the official CS50x submission process and verify the submission in the CS50 gradebook.
+
+These are final-check items, not a claim that every item remains unfinished. Update this section once each item has been confirmed complete.
+
+======================================================================
+END OF DEVELOPMENT LOG
+======================================================================
