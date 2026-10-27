@@ -13,8 +13,7 @@ Take a look at the video demonstration: [Expense Tracker](https://youtu.be/f5AzC
 
 ### Description:
 
-Expense Tracker is a web application developed as my CS50x final
-project to help users manage and track their personal expenses.
+Expense Tracker is a web application developed to help users manage and track their personal expenses.
 It allows users to register, securely log in, record and manage
 expenses, organize transactions by category, search and filter
 expenses, and view spending summaries through a dashboard.
